@@ -88,7 +88,7 @@ def process_image(binarized_image_path):
 
     cleaned_img = Image.fromarray(cropped_img_array)
     cleaned_image_path = os.path.join(os.path.dirname(binarized_image_path),
-                                      f"{os.path.basename(binarized_image_path).replace('.png', '_processed.png')}")
+                                      f"{os.path.basename(binarized_image_path).replace('.png', '_final.png')}")
 
     print(f"Saving processed image to: {cleaned_image_path}")
     cleaned_img.save(cleaned_image_path)

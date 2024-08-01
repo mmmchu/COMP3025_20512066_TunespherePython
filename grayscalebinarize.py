@@ -39,13 +39,13 @@ def pdf_to_grayscale_and_binarize(pdf_path, output_folder, threshold=195):
 
     # Save the grayscale image
     grayscale_image_path = os.path.join(output_folder,
-                                        f"{os.path.basename(pdf_path).replace('.pdf', '')}_page_{page_number + 1}_grayscale.png")
+                                        f"{os.path.basename(pdf_path).replace('.pdf', '')}_pg_{page_number + 1}_GS.png")
     gray_img.save(grayscale_image_path)
     print(f"Saved grayscale image to: {grayscale_image_path}")
 
     # Save the binarized image
     binarized_image_path = os.path.join(output_folder,
-                                        f"{os.path.basename(pdf_path).replace('.pdf', '')}_page_{page_number + 1}_binarized.png")
+                                        f"{os.path.basename(pdf_path).replace('.pdf', '')}_pg_{page_number + 1}_BN.png")
     binarized_img.save(binarized_image_path)
     print(f"Saved binarized image to: {binarized_image_path}")
 
