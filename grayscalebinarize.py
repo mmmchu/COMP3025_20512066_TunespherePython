@@ -2,7 +2,7 @@ import fitz  # PyMuPDF
 from PIL import Image
 import os
 
-def pdf_to_grayscale_and_binarize(pdf_path, output_folder, threshold=195):
+def pdf_to_grayscale_and_binarize(pdf_path, output_folder, threshold= 175):
     print(f"Processing PDF: {pdf_path}")
 
     # Open the PDF file
