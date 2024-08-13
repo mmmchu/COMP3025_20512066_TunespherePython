@@ -2,6 +2,7 @@ import os
 from grayscalebinarize import pdf_to_grayscale_and_binarize
 from staff_removal import process_image
 from clef_detection import crop_clef  # Updated to crop_clef based on your previous request
+from note_head_detection import loadnote
 
 def main():
     # Path to your PDF file
@@ -20,6 +21,11 @@ def main():
         # Perform clef cropping on the processed image
         if processed_image_path:
             crop_clef(processed_image_path)
+
+
+     # Perform notes cropping on the processed image
+        if processed_image_path:
+            loadnote(processed_image_path)
 
 if __name__ == "__main__":
     main()
