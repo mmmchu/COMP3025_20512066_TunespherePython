@@ -2,6 +2,7 @@ import os
 import numpy as np
 from PIL import Image
 
+
 def calculate_histogram(binarized_image_path):
     print(f"Loading binarized image from: {binarized_image_path}")
 
@@ -32,6 +33,7 @@ def calculate_histogram(binarized_image_path):
 
     return staff_line_rows, binarized_img_array, height, width
 
+
 def remove_staff_lines(binarized_img_array, staff_line_rows, height, width):
     # Remove staff lines
     cleaned_img_array = binarized_img_array.copy()
@@ -45,6 +47,7 @@ def remove_staff_lines(binarized_img_array, staff_line_rows, height, width):
 
     return cleaned_img_array
 
+
 def crop_image(cleaned_img_array, staff_line_rows, height, width):
     # Horizontal cropping
     first_col = width
@@ -53,8 +56,9 @@ def crop_image(cleaned_img_array, staff_line_rows, height, width):
     for row in staff_line_rows:
         row_indices = np.where(cleaned_img_array[row, :] == 0)[0]
         if len(row_indices) > 0:
-            first_col = min(first_col, row_indices[0])
-            last_col = max(last_col, row_indices[-1])
+            row_indices_list = row_indices.tolist()
+            first_col = min(first_col, row_indices_list[0])
+            last_col = max(last_col, row_indices_list[-1])
 
     if first_col < last_col:
         cleaned_img_array = cleaned_img_array[:, first_col:last_col + 5]
@@ -72,7 +76,7 @@ def crop_image(cleaned_img_array, staff_line_rows, height, width):
     average_spacing = sum(staff_spacing) / len(staff_spacing)
 
     top_crop = max(0, staff_line_rows[0] - 2 * average_spacing)
-    bottom_crop = min(height, staff_line_rows[-1] + 2 * average_spacing)
+    bottom_crop = min(height, staff_line_rows[-1] + 5 * average_spacing)
 
     top_crop = int(max(0, top_crop - 1))
     bottom_crop = int(min(height, bottom_crop + 1))
@@ -80,6 +84,7 @@ def crop_image(cleaned_img_array, staff_line_rows, height, width):
     cropped_img_array = cleaned_img_array[int(top_crop):int(bottom_crop), :]
 
     return cropped_img_array
+
 
 def process_image(binarized_image_path):
     staff_line_rows, binarized_img_array, height, width = calculate_histogram(binarized_image_path)
@@ -95,3 +100,19 @@ def process_image(binarized_image_path):
 
     print(f"Staff line removal and cropping complete. Processed image saved to: {cleaned_image_path}")
     return cleaned_image_path
+
+
+def process_all_binarized_images(inputfolder):
+    # Find all binarized images in the input folder
+    binarized_image_paths = [os.path.join(inputfolder, filename)
+                             for filename in os.listdir(inputfolder)
+                             if filename.endswith('_BN.png')]
+
+    # Process each binarized image
+    for binarized_image_path in binarized_image_paths:
+        process_image(binarized_image_path)
+
+
+# Example usage
+input_folder = 'processed_images'
+process_all_binarized_images(input_folder)
