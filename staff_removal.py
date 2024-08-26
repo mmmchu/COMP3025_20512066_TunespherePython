@@ -75,8 +75,8 @@ def crop_image(cleaned_img_array, staff_line_rows, height, width):
 
     average_spacing = sum(staff_spacing) / len(staff_spacing)
 
-    top_crop = max(0, staff_line_rows[0] - 2 * average_spacing)
-    bottom_crop = min(height, staff_line_rows[-1] + 5 * average_spacing)
+    top_crop = max(0, staff_line_rows[0] - 1 * average_spacing)
+    bottom_crop = min(height, staff_line_rows[-1] - average_spacing)
 
     top_crop = int(max(0, top_crop - 1))
     bottom_crop = int(min(height, bottom_crop + 1))

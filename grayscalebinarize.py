@@ -3,7 +3,7 @@ from PIL import Image
 import os
 
 
-def pdf_to_grayscale_and_binarize(pdfpath, outputfolder, threshold=175):
+def pdf_to_grayscale_and_binarize(pdfpath, outputfolder, threshold=185):
     print(f"Processing PDF: {pdfpath}")
 
     # Open the PDF file
@@ -59,6 +59,6 @@ def pdf_to_grayscale_and_binarize(pdfpath, outputfolder, threshold=175):
 
 
 # Example usage
-pdf_path = 'Image/music3.pdf'
+pdf_path = 'Image/music1.pdf'
 output_folder = 'processed_images'
 binarized_image_path = pdf_to_grayscale_and_binarize(pdf_path, output_folder)

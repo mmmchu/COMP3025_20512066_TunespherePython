@@ -15,9 +15,9 @@ def crop_clef(processed_image_path):
         return None
 
     # Crop from the left to a width of 15 pixels
-    width = 30
+    width = 35
     height = processed_img_array.shape[0]
-    cropped_img_array = processed_img_array[:, 4:width]
+    cropped_img_array = processed_img_array[:, 13:width]
 
     # Create the output folder if it doesn't exist
     output_folder = 'clef_images'
@@ -61,7 +61,7 @@ def crop_clef(processed_image_path):
     contours, _ = cv2.findContours(dilated_img, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
     # Define a threshold for circularity to consider a contour as circular
-    circularity_threshold = 0.7
+    circularity_threshold = 0.8
 
     # Iterate through all contours
     for contour in contours:
@@ -83,9 +83,12 @@ def crop_clef(processed_image_path):
             if M['m00'] != 0:
                 cx = int(M['m10'] / M['m00'])
                 cy = int(M['m01'] / M['m00'])
-                cv2.circle(clef_img_color, (cx, cy), 3, (255, 0, 0), -1)  # Blue dot
+                cv2.circle(clef_img_color, (cx, cy), 3, (255, 0, 255), -1)  # Blue dot
 
     # Save the image with blue dots on circular contours
     blob_detection_path = os.path.join(output_folder, "blob_detection_with_dots.png")
     cv2.imwrite(blob_detection_path, clef_img_color)
     print(f"Blob detection image with blue dots saved at: {blob_detection_path}")
+
+
+"TODO detect the type of clef "
