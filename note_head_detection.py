@@ -12,7 +12,7 @@ def apply_method1(image_array):
     canny_edges = cv2.Canny(processed_img_cv, threshold1=100, threshold2=200, apertureSize=3)
 
     # Dilate the edges to make them thicker and more prominent (2x2 kernel)
-    kernel = np.ones((5, 5), np.uint8)
+    kernel = np.ones((3, 3), np.uint8)
     dilated_edges = cv2.dilate(canny_edges, kernel, iterations=1)
 
     return canny_edges, dilated_edges
