@@ -4,7 +4,7 @@ from staff_removal import process_image
 from clef_detection import crop_clef  # Updated to crop_clef based on your previous request
 from note_head_detection import notes_detect
 from stem_detection import stem_detect
-
+from beam_detection import beam_detect
 def main():
     # Path to your PDF file
     pdf_path = 'Image/music1.pdf'
@@ -26,6 +26,8 @@ def main():
             notes_detect(processed_image_path)
         if processed_image_path:
             stem_detect(processed_image_path)
+        if processed_image_path:
+            beam_detect(processed_image_path)
 
 if __name__ == "__main__":
     main()
