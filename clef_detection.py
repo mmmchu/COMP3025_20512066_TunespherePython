@@ -1,7 +1,7 @@
 import os
 import numpy as np
 from PIL import Image
-import cv2  # OpenCV for image processing
+import cv2
 
 def crop_clef(processed_image_path):
     print(f"Loading processed image from: {processed_image_path}")
@@ -14,7 +14,7 @@ def crop_clef(processed_image_path):
         print(f"Error loading image: {e}")
         return None
 
-    # Crop from the left to a width of 15 pixels
+    # Crop from the left to a width of 35 pixels
     width = 35
     height = processed_img_array.shape[0]
     cropped_img_array = processed_img_array[:, 13:width]
@@ -63,6 +63,9 @@ def crop_clef(processed_image_path):
     # Define a threshold for circularity to consider a contour as circular
     circularity_threshold = 0.8
 
+    # List to store blob information
+    blob_info = []
+
     # Iterate through all contours
     for contour in contours:
         # Calculate the contour's bounding box, area, and perimeter
@@ -85,10 +88,34 @@ def crop_clef(processed_image_path):
                 cy = int(M['m01'] / M['m00'])
                 cv2.circle(clef_img_color, (cx, cy), 3, (255, 0, 255), -1)  # Blue dot
 
+                # Store blob information
+                blob_info.append((cx, cy))
+
+    # Sort blobs by their horizontal position (x-coordinate)
+    blob_info.sort(key=lambda x: x[0])
+
+    # Count clef types
+    bass_clef_count = 0
+    treble_clef_count = 0
+
+    # Determine clef type based on sorted blobs' vertical positions
+    for _, cy in blob_info:
+        if cy < height * 0.5:  # Example threshold for bass clef
+            bass_clef_count += 1
+        else:
+            treble_clef_count += 1
+
     # Save the image with blue dots on circular contours
     blob_detection_path = os.path.join(output_folder, "blob_detection_with_dots.png")
     cv2.imwrite(blob_detection_path, clef_img_color)
     print(f"Blob detection image with blue dots saved at: {blob_detection_path}")
 
+    # Save clef counts to a text file
+    clef_counts_path = os.path.join(output_folder, "clef_counts.txt")
+    with open(clef_counts_path, 'w') as file:
+        file.write(f"Treble Clefs: {treble_clef_count}\n")
+        file.write(f"Bass Clefs: {bass_clef_count}\n")
+    print(f"Clef counts saved at: {clef_counts_path}")
 
-"TODO detect the type of clef "
+# Example usage
+# crop_clef('path_to_your_processed_image.png')
