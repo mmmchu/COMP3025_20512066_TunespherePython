@@ -22,3 +22,14 @@ def pitch_detect(processed_image_path):
 
     print("Pitch processing complete.")
     return processed_img_array
+
+#sort the notehead identified  based on their horizontal position
+
+#loop through the staff ranges and check for the noteheads which lie in each staff range
+
+# find the position in the staff of the notehead, each row index of the staff was subtracted by the
+#row index of the centre of the notehead
+
+#A list was created which saves both the
+#index of the nearest staff line/space and the duration of the note in the same order in which the
+#notes were to be played.
