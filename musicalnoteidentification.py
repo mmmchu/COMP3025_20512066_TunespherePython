@@ -78,13 +78,13 @@ def detect_notehead_stem_attachment(destination_folder):
             if notehead_type == "filled":
                 if has_beam:
                     color = (0, 255, 255)  # Yellow for quavers
-                    label = "quaver"
+                    label = "q"
                 else:
                     color = (0, 255, 0)  # Green for crotchets
-                    label = "crotchet"
+                    label = "c"
             else:
                 color = (255, 0, 0)  # Blue for minims
-                label = "minim"
+                label = "m"
         else:
             continue  # Ignore semibreves for now
 
