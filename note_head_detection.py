@@ -17,25 +17,29 @@ def apply_method1(image_array):
 
     return canny_edges, dilated_edges
 
+
 def apply_method2(image_array):
-    """Apply median blur, adaptive thresholding, and morphological closing to outline noteheads in red."""
+    """Remove stems while preserving noteheads using median blur, adaptive thresholding, and morphological operations."""
+
     # Convert image to OpenCV format (uint8 array)
     processed_img_cv = image_array.astype(np.uint8)
 
-    # Apply Median Blur to reduce noise
-    blurred_img = cv2.medianBlur(processed_img_cv, 3)  # Using a 3x3 kernel
+    # Step 1: Apply a light Median Blur to reduce noise but keep noteheads
+    blurred_img = cv2.medianBlur(processed_img_cv, 3)  # 3x3 to avoid removing hollow noteheads
 
-    # Apply Gaussian Adaptive Thresholding
+    # Step 2: Apply Gaussian Adaptive Thresholding
     adaptive_threshold = cv2.adaptiveThreshold(blurred_img, 255,
                                                cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
                                                cv2.THRESH_BINARY_INV,
-                                               15, 2)  # Adjust block size and C
+                                               15, 1)  # Adjusted C to preserve noteheads
 
-    # Define a kernel size for morphological operations
-    kernel = np.ones((5, 5), np.uint8)  # Larger kernel for closing
+    # Step 3: Remove vertical stems using **horizontal erosion**
+    horizontal_kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 1))  # Wide but short
+    eroded = cv2.erode(adaptive_threshold, horizontal_kernel, iterations=1)
 
-    # Perform Morphological Closing to enhance the outlines
-    closed_img = cv2.morphologyEx(adaptive_threshold, cv2.MORPH_CLOSE, kernel)
+    # Step 4: Restore noteheads using morphological closing
+    closing_kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3))
+    closed_img = cv2.morphologyEx(eroded, cv2.MORPH_CLOSE, closing_kernel)
 
     # Convert to color images for drawing contours
     color_img_gaussian = cv2.cvtColor(adaptive_threshold, cv2.COLOR_GRAY2BGR)
@@ -50,7 +54,6 @@ def apply_method2(image_array):
     cv2.drawContours(color_img_closing, contours_closing, -1, (0, 255, 0), 2)
 
     return blurred_img, adaptive_threshold, color_img_gaussian, color_img_closing
-
 def detect_blobs(image, method_name):
     """Apply blob detection based on circularity, aspect ratio, and size, and save the results."""
     # Ensure image is in grayscale format (single-channel)
@@ -66,10 +69,13 @@ def detect_blobs(image, method_name):
     contours, _ = cv2.findContours(image_cv, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
     # Define thresholds for filtering
-    circularity_threshold = 0.1  # Higher threshold for more circular shapes
+    circularity_threshold = 0.2  # Lower threshold to include less circular shapes
     aspect_ratio_threshold = 2.8  # Maximum aspect ratio for noteheads
-    min_area = 30  # Minimum area for noteheads
+    min_area = 1  # Lower minimum area to detect small dots
     max_area = 500  # Maximum area for noteheads
+    solidity_threshold = 0.5  # Lower threshold to include less solid shapes
+    contour_completeness_threshold = 0.4  # Lower threshold for contour completeness
+    small_dot_area_threshold = 30  # Maximum area for small dots to be classified as unfilled
 
     # Create an RGB version of the image to draw colored dots
     blob_img_color = cv2.cvtColor(image_cv, cv2.COLOR_GRAY2BGR)
@@ -91,6 +97,15 @@ def detect_blobs(image, method_name):
         # Calculate aspect ratio
         aspect_ratio = float(w) / h if w > h else float(h) / w
 
+        # Calculate solidity (area / convex hull area)
+        hull = cv2.convexHull(contour)
+        hull_area = cv2.contourArea(hull)
+        solidity = float(area) / hull_area if hull_area > 0 else 0
+
+        # Calculate contour completeness (perimeter / convex hull perimeter)
+        hull_perimeter = cv2.arcLength(hull, True)
+        contour_completeness = perimeter / hull_perimeter if hull_perimeter > 0 else 0
+
         # Apply filters
         if (circularity > circularity_threshold and
             aspect_ratio < aspect_ratio_threshold and
@@ -101,13 +116,22 @@ def detect_blobs(image, method_name):
             if M['m00'] != 0:
                 cx = int(M['m10'] / M['m00'])
                 cy = int(M['m01'] / M['m00'])
-                cv2.circle(blob_img_color, (cx, cy), 3, (255, 0, 255), -1)  # Draw a magenta dot
+
+                # Determine if the notehead is filled or unfilled based on solidity, contour completeness, and size
+                if area < small_dot_area_threshold:
+                    # Small dots are classified as unfilled noteheads (draw with red color)
+                    cv2.circle(blob_img_color, (cx, cy), 3, (0, 0, 255), -1)
+                elif solidity > solidity_threshold and contour_completeness > contour_completeness_threshold:
+                    # Filled notehead (draw with green color)
+                    cv2.circle(blob_img_color, (cx, cy), 3, (0, 255, 0), -1)
+                else:
+                    # Unfilled notehead (draw with red color)
+                    cv2.circle(blob_img_color, (cx, cy), 3, (0, 0, 255), -1)
 
     # Save the blob-detected image
     blob_save_path = os.path.join('notehead_images', f"{method_name}_blobs.png")
     cv2.imwrite(blob_save_path, blob_img_color)
     print(f"{method_name} Blob-detected image saved at: {blob_save_path}")
-
 
 def notes_detect(processed_image_path):
     print(f"Loading processed image from: {processed_image_path}")
@@ -128,7 +152,6 @@ def notes_detect(processed_image_path):
 
         # Crop the image from the right
         cropped_img_array = processed_img_array[:, crop_width:]
-
 
     except Exception as e:
         print(f"Error loading or cropping image: {e}")
