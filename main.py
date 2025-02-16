@@ -1,5 +1,4 @@
 import os
-import shutil
 from grayscalebinarize import pdf_to_grayscale_and_binarize
 from staff_removal import process_image
 from clef_detection import crop_clef
@@ -7,32 +6,17 @@ from note_head_detection import notes_detect
 from stem_detection import stem_detect
 from beam_detection import beam_detect
 from pitch_identification import pitch_detect
-from musicalnoteidentification import detect_notehead_stem_attachment
+from musicalnoteidentification import check_notehead_attached_to_stem
 
-def copy_images_to_folder(destination_folder):
-    """Copies specific images to the destination folder."""
-    if not os.path.exists(destination_folder):
-        os.makedirs(destination_folder)
-
-    files_to_copy = {
-        'stem_images': 'vertical_lines.png',
-        'beam_images': 'lines.png',
-        'notehead_images': 'method1_dilated_cannyedges.png'
-    }
-
-    for source_folder, filename in files_to_copy.items():
-        file_path = os.path.join(source_folder, filename)
-        if os.path.isfile(file_path):
-            destination_file = os.path.join(destination_folder, filename)
-            shutil.copy(file_path, destination_file)
-            print(f"Copied {file_path} to {destination_file}")
-        else:
-            print(f"No {filename} found in {source_folder}")
 
 def main():
-    # Path to your PDF file
+    # Paths
     pdf_path = 'Image/music1.pdf'
     output_folder = 'processed_images'
+    notehead_folder = 'notehead_images'
+    result_folder = 'musical_noteidentification'
+
+    os.makedirs(result_folder, exist_ok=True)
 
     # Convert PDF to grayscale & binarized images
     binarized_image_path = pdf_to_grayscale_and_binarize(pdf_path, output_folder)
@@ -47,12 +31,16 @@ def main():
             beam_detect(processed_image_path)
             pitch_detect(processed_image_path)
 
-    # Copy images for notehead identification
-    destination_folder = 'musicnoteidentification_images'
-    copy_images_to_folder(destination_folder)
+            # Path of the detected notehead image
+            notehead_blobs_path = os.path.join(notehead_folder, 'processed_image_with_dots.png')
+            result_path = os.path.join(result_folder, 'bound_box_notehead.png')
 
-    # Run notehead classification after copying images
-    detect_notehead_stem_attachment(destination_folder)
+            # Check if notehead is attached to a stem
+            if os.path.exists(notehead_blobs_path):
+                check_notehead_attached_to_stem(notehead_blobs_path, result_path)
+
+            else:
+                print(f"Error: Notehead blob image not found at {notehead_blobs_path}")
 
 if __name__ == "__main__":
     main()

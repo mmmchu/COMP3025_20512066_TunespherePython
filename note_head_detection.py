@@ -54,7 +54,8 @@ def apply_method2(image_array):
     cv2.drawContours(color_img_closing, contours_closing, -1, (0, 255, 0), 2)
 
     return blurred_img, adaptive_threshold, color_img_gaussian, color_img_closing
-def detect_blobs(image, method_name):
+
+def detect_blobs(image, method_name, cropped_image_path=None):
     """Apply blob detection based on circularity, aspect ratio, and size, and save the results."""
     # Ensure image is in grayscale format (single-channel)
     if len(image.shape) == 3:
@@ -69,69 +70,113 @@ def detect_blobs(image, method_name):
     contours, _ = cv2.findContours(image_cv, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
     # Define thresholds for filtering
-    circularity_threshold = 0.2  # Lower threshold to include less circular shapes
-    aspect_ratio_threshold = 2.8  # Maximum aspect ratio for noteheads
-    min_area = 1  # Lower minimum area to detect small dots
-    max_area = 500  # Maximum area for noteheads
-    solidity_threshold = 0.5  # Lower threshold to include less solid shapes
-    contour_completeness_threshold = 0.4  # Lower threshold for contour completeness
-    small_dot_area_threshold = 30  # Maximum area for small dots to be classified as unfilled
+    circularity_threshold = 0.2
+    aspect_ratio_threshold = 2.8
+    min_area = 1
+    max_area = 500
+    solidity_threshold = 0.5
+    contour_completeness_threshold = 0.4
+    small_dot_area_threshold = 30
 
     # Create an RGB version of the image to draw colored dots
     blob_img_color = cv2.cvtColor(image_cv, cv2.COLOR_GRAY2BGR)
 
-    # Iterate through all contours
+    # If a cropped image path is provided, load it to draw blobs on it
+    if cropped_image_path:
+        cropped_img = cv2.imread(cropped_image_path)
+        if cropped_img is None:
+            print(f"Error: Unable to load cropped image from {cropped_image_path}")
+        else:
+            cropped_img_color = cropped_img.copy()
+    else:
+        cropped_img_color = None
+
+    leftmost_x = float('inf')  # Start with a very large value
+    valid_blobs = []
+
+    # First pass: Find the leftmost blob
     for contour in contours:
-        # Calculate the contour's bounding box, area, and perimeter
-        (x, y, w, h) = cv2.boundingRect(contour)
+        x, y, w, h = cv2.boundingRect(contour)
+        cx = x + w // 2  # X centroid
+        if cx < leftmost_x:
+            leftmost_x = cx
+
+    # Second pass: Filter blobs that are at least 10 columns away from the leftmost blob
+    for contour in contours:
+        x, y, w, h = cv2.boundingRect(contour)
+        cx = x + w // 2  # X centroid
+        cy = y + h // 2  # Y centroid
         area = cv2.contourArea(contour)
         perimeter = cv2.arcLength(contour, True)
 
-        # Skip contours with invalid perimeter
         if perimeter == 0:
             continue
 
-        # Calculate circularity
         circularity = (4 * np.pi * area) / (perimeter ** 2)
-
-        # Calculate aspect ratio
         aspect_ratio = float(w) / h if w > h else float(h) / w
-
-        # Calculate solidity (area / convex hull area)
         hull = cv2.convexHull(contour)
         hull_area = cv2.contourArea(hull)
         solidity = float(area) / hull_area if hull_area > 0 else 0
-
-        # Calculate contour completeness (perimeter / convex hull perimeter)
         hull_perimeter = cv2.arcLength(hull, True)
         contour_completeness = perimeter / hull_perimeter if hull_perimeter > 0 else 0
 
-        # Apply filters
+        # Apply filters and check distance from leftmost blob
         if (circularity > circularity_threshold and
             aspect_ratio < aspect_ratio_threshold and
-            min_area < area < max_area):
+            min_area < area < max_area and
+            (cx - leftmost_x) >= 50):  # Ensure the blob is at least 10 columns away
 
-            # Calculate the centroid of the contour
-            M = cv2.moments(contour)
-            if M['m00'] != 0:
-                cx = int(M['m10'] / M['m00'])
-                cy = int(M['m01'] / M['m00'])
+            valid_blobs.append((cx, cy, area, solidity, contour_completeness))
 
-                # Determine if the notehead is filled or unfilled based on solidity, contour completeness, and size
-                if area < small_dot_area_threshold:
-                    # Small dots are classified as unfilled noteheads (draw with red color)
-                    cv2.circle(blob_img_color, (cx, cy), 3, (0, 0, 255), -1)
-                elif solidity > solidity_threshold and contour_completeness > contour_completeness_threshold:
-                    # Filled notehead (draw with green color)
-                    cv2.circle(blob_img_color, (cx, cy), 3, (0, 255, 0), -1)
-                else:
-                    # Unfilled notehead (draw with red color)
-                    cv2.circle(blob_img_color, (cx, cy), 3, (0, 0, 255), -1)
+    # Draw only valid blobs
+    for cx, cy, area, solidity, contour_completeness in valid_blobs:
+        if area < small_dot_area_threshold:
+            cv2.circle(blob_img_color, (cx, cy), 3, (0, 0, 255), -1)
+            if cropped_img_color is not None:
+                cv2.circle(cropped_img_color, (cx, cy), 3, (0, 0, 255), -1)
+        elif solidity > solidity_threshold and contour_completeness > contour_completeness_threshold:
+            cv2.circle(blob_img_color, (cx, cy), 3, (0, 255, 0), -1)
+            if cropped_img_color is not None:
+                cv2.circle(cropped_img_color, (cx, cy), 3, (0, 255, 0), -1)
+        else:
+            cv2.circle(blob_img_color, (cx, cy), 3, (0, 0, 255), -1)
+            if cropped_img_color is not None:
+                cv2.circle(cropped_img_color, (cx, cy), 3, (0, 0, 255), -1)
 
     # Save the blob-detected image
     blob_save_path = os.path.join('notehead_images', f"{method_name}_blobs.png")
     cv2.imwrite(blob_save_path, blob_img_color)
     print(f"{method_name} Blob-detected image saved at: {blob_save_path}")
+
+    # Save the modified cropped image with blobs drawn on it
+    if cropped_img_color is not None:
+        cropped_blob_save_path = os.path.join('notehead_images', "cropped_image_with_blobs.png")
+        cv2.imwrite(cropped_blob_save_path, cropped_img_color)
+        print(f"Cropped image with blobs saved at: {cropped_blob_save_path}")
+
+    return valid_blobs  # Return the list of valid blobs
+
+def draw_detected_dots_on_original(processed_image_path, valid_blobs, output_path):
+    """Draw detected blobs onto the original processed image."""
+    # Load the original processed image
+    original_img = cv2.imread(processed_image_path)
+    if original_img is None:
+        print(f"Error: Unable to load processed image from {processed_image_path}")
+        return
+
+    # Draw new dots on the original image based on detected blobs
+    for cx, cy, area, solidity, contour_completeness in valid_blobs:
+        if area < 30:  # Small dots
+            cv2.circle(original_img, (cx, cy), 5, (0, 0, 255), -1)  # Red dot (BGR format)
+        elif solidity > 0.5 and contour_completeness > 0.4:  # Valid noteheads
+            cv2.circle(original_img, (cx, cy), 5, (0, 255, 0), -1)  # Green dot (BGR format)
+        else:  # Invalid blobs
+            cv2.circle(original_img, (cx, cy), 5, (0, 0, 255), -1)  # Red dot (BGR format)
+
+    # Save the updated image with newly drawn dots
+    cv2.imwrite(output_path, original_img)
+    print(f"Updated image with new dots saved at: {output_path}")
+
 
 def notes_detect(processed_image_path):
     print(f"Loading processed image from: {processed_image_path}")
@@ -141,20 +186,8 @@ def notes_detect(processed_image_path):
         processed_img = Image.open(processed_image_path)
         processed_img_array = np.array(processed_img)
 
-        # Get the image dimensions
-        height, width = processed_img_array.shape[:2]
-
-        # Define the percentage to crop from the right (e.g., 50% for half the image)
-        crop_percentage = 10  # You can change this value (0-100)
-
-        # Calculate the cropping width based on the percentage
-        crop_width = int(width * crop_percentage / 100)
-
-        # Crop the image from the right
-        cropped_img_array = processed_img_array[:, crop_width:]
-
     except Exception as e:
-        print(f"Error loading or cropping image: {e}")
+        print(f"Error loading image: {e}")
         return None
 
     # Create the output folder if it doesn't exist
@@ -162,13 +195,8 @@ def notes_detect(processed_image_path):
     if not os.path.exists(output_folder):
         os.makedirs(output_folder)
 
-    # Save the cropped image for reference
-    cropped_save_path = os.path.join(output_folder, "cropped_image.png")
-    cv2.imwrite(cropped_save_path, cv2.cvtColor(np.array(cropped_img_array), cv2.COLOR_RGB2BGR))
-    print(f"Cropped image saved at: {cropped_save_path}")
-
-    # Apply Method 1 to the cropped image
-    canny_edges, dilated_edges = apply_method1(cropped_img_array)
+    # Apply Method 1 to the entire image
+    canny_edges, dilated_edges = apply_method1(processed_img_array)
     canny_edges_save_path = os.path.join(output_folder, "method1_cannyedges.png")
     dilated_edges_save_path = os.path.join(output_folder, "method1_dilated_cannyedges.png")
     cv2.imwrite(canny_edges_save_path, canny_edges)
@@ -176,10 +204,11 @@ def notes_detect(processed_image_path):
     print(f"Method 1 Canny edges image saved at: {canny_edges_save_path}")
     print(f"Method 1 Dilated Canny edges image saved at: {dilated_edges_save_path}")
 
-    detect_blobs(dilated_edges, "method1_dilated_cannyedges")
+    # Apply blob detection on Method 1's output
+    valid_blobs_method1 = detect_blobs(dilated_edges, "method1_dilated_cannyedges")
 
-    # Apply Method 2 to the cropped image
-    blurred_img, adaptive_threshold, color_img_gaussian, color_img_closing = apply_method2(cropped_img_array)
+    # Apply Method 2 to the entire image
+    blurred_img, adaptive_threshold, color_img_gaussian, color_img_closing = apply_method2(processed_img_array)
 
     # Save each stage of Method 2
     blurred_img_save_path = os.path.join(output_folder, "method2_medianblurred_image.png")
@@ -194,4 +223,9 @@ def notes_detect(processed_image_path):
     print(f"Method 2 Gaussian outlined image saved at: {color_img_gaussian_save_path}")
     print(f"Method 2 Closing outlined image saved at: {color_img_closing_save_path}")
 
-    detect_blobs(color_img_closing, "method2_closing_outlined")
+    # Apply blob detection on Method 2’s output
+    valid_blobs_method2 = detect_blobs(color_img_closing, "method2_closing_outlined")
+
+    # **New Step: Draw detected blobs onto original processed image**
+    output_image_with_dots = os.path.join(output_folder, "processed_image_with_dots.png")
+    draw_detected_dots_on_original(processed_image_path, valid_blobs_method2, output_image_with_dots)

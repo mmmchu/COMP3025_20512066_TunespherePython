@@ -116,6 +116,3 @@ def crop_clef(processed_image_path):
         file.write(f"Treble Clefs: {treble_clef_count}\n")
         file.write(f"Bass Clefs: {bass_clef_count}\n")
     print(f"Clef counts saved at: {clef_counts_path}")
-
-# Example usage
-# crop_clef('path_to_your_processed_image.png')
