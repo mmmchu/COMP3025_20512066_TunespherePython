@@ -3,6 +3,7 @@ import numpy as np
 from PIL import Image
 import cv2  # OpenCV for image processing
 
+
 def beam_detect(processed_image_path):
     print(f"Loading processed image from: {processed_image_path}")
 
@@ -25,6 +26,7 @@ def beam_detect(processed_image_path):
     # Output message after processing
     print("Beam detection and processing complete.")
     return processed_img_array
+
 
 def beam_image_processing(image_array, output_folder):
     # Convert the image to grayscale if it's not already
