@@ -65,6 +65,79 @@ def check_notehead_attached_to_stem(image_path, save_path):
 
     return attached_noteheads
 
+def draw_boundingbox(barboundbox_image_path, notehead_image_path, output_path):
+    # Load the barboundbox image (with the green bounding boxes)
+    barboundbox_image = cv2.imread(barboundbox_image_path)
+    if barboundbox_image is None:
+        print(f"Error: Could not load {barboundbox_image_path}")
+        return
+
+    # Load the notehead image
+    notehead_image = cv2.imread(notehead_image_path)
+    if notehead_image is None:
+        print(f"Error: Could not load {notehead_image_path}")
+        return
+
+    # Define the lower and upper bounds for the green color in BGR format
+    lower_green = np.array([0, 200, 0])  # Lower bound for green
+    upper_green = np.array([100, 255, 100])  # Upper bound for green
+
+    # Create a mask for the green color
+    mask = cv2.inRange(barboundbox_image, lower_green, upper_green)
+
+    # Find contours of the green bounding boxes
+    contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+    if not contours:
+        print("No green bounding boxes found in the barboundbox image.")
+        return
+
+    # Draw all yellow bounding boxes on the notehead image and store their coordinates
+    yellow_boxes = []
+    for contour in contours:
+        # Get the bounding box coordinates for each contour
+        x, y, w, h = cv2.boundingRect(contour)
+        # Draw the bounding box on the notehead image
+        cv2.rectangle(notehead_image, (x, y), (x + w, y + h), (0, 255, 255), 2)  # Yellow color in BGR
+        # Store the yellow bounding box coordinates
+        yellow_boxes.append((x, y, x + w, y + h))
+
+    # Remove blue bounding boxes or red dots outside the yellow bounding boxes
+    # Define the lower and upper bounds for blue and red colors
+    lower_blue = np.array([200, 0, 0])  # Lower bound for blue
+    upper_blue = np.array([255, 100, 100])  # Upper bound for blue
+    lower_red = np.array([0, 0, 200])  # Lower bound for red
+    upper_red = np.array([100, 100, 255])  # Upper bound for red
+
+    # Create masks for blue and red colors
+    mask_blue = cv2.inRange(notehead_image, lower_blue, upper_blue)
+    mask_red = cv2.inRange(notehead_image, lower_red, upper_red)
+
+    # Combine the blue and red masks
+    mask_combined = cv2.bitwise_or(mask_blue, mask_red)
+
+    # Find contours of the blue bounding boxes and red dots
+    contours_combined, _ = cv2.findContours(mask_combined, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+    for contour in contours_combined:
+        # Get the bounding box coordinates for each blue/red contour
+        x, y, w, h = cv2.boundingRect(contour)
+        # Check if the center of the blue/red contour is inside any yellow bounding box
+        cx, cy = x + w // 2, y + h // 2  # Center of the blue/red contour
+        inside_yellow_box = False
+        for yellow_box in yellow_boxes:
+            x1, y1, x2, y2 = yellow_box
+            if x1 <= cx <= x2 and y1 <= cy <= y2:
+                inside_yellow_box = True
+                break
+        # If the blue/red contour is not inside any yellow bounding box, remove it
+        if not inside_yellow_box:
+            cv2.rectangle(notehead_image, (x, y), (x + w, y + h), (0, 0, 0), -1)  # Fill with black to remove
+
+    # Save the result
+    cv2.imwrite(output_path, notehead_image)
+    print(f"Filtered bounding boxes and saved to {output_path}")
+
 
 def draw_yellow_line_on_beam(lines_image_path, notehead_image_path, output_path):
     # Load the detected beam lines image (grayscale)
