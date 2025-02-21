@@ -91,28 +91,31 @@ def crop_clef(processed_image_path):
                 # Store blob information
                 blob_info.append((cx, cy))
 
-    # Sort blobs by their horizontal position (x-coordinate)
-    blob_info.sort(key=lambda x: x[0])
+    # Sort blobs by Y-coordinate (top to bottom)
+    blob_info.sort(key=lambda x: x[1])  # Sort by vertical position (y-coordinate)
 
-    # Count clef types
-    bass_clef_count = 0
-    treble_clef_count = 0
+    # Alternate between Bass and Treble Clef
+    clef_labels = []
+    for i, (cx, cy) in enumerate(blob_info):
+        clef_type = "T" if i % 2 == 0 else "B"  # Alternate between B and T
+        clef_labels.append((cx, cy, clef_type))
 
-    # Determine clef type based on sorted blobs' vertical positions
-    for _, cy in blob_info:
-        if cy < height * 0.5:  # Example threshold for bass clef
-            bass_clef_count += 1
-        else:
-            treble_clef_count += 1
+        # Draw the corresponding letter (B or T) near the blob
+        color = (0, 0, 255) if clef_type == "B" else (255, 0, 0)  # Red for B, Blue for T
+        cv2.putText(clef_img_color, clef_type, (cx + 5, cy),
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.6, color, 2)
+
+    # Save the updated image
+    output_path = os.path.join(output_folder, "clef_classification.png")
+    cv2.imwrite(output_path, clef_img_color)
+    print(f"Clef classification image saved at: {output_path}")
+
+    # Save the image with initials
+    blob_detection_path = os.path.join(output_folder, "blob_detection_with_labels.png")
+    cv2.imwrite(blob_detection_path, clef_img_color)
+    print(f"Image with clef initials saved at: {blob_detection_path}")
 
     # Save the image with blue dots on circular contours
     blob_detection_path = os.path.join(output_folder, "blob_detection_with_dots.png")
     cv2.imwrite(blob_detection_path, clef_img_color)
     print(f"Blob detection image with blue dots saved at: {blob_detection_path}")
-
-    # Save clef counts to a text file
-    clef_counts_path = os.path.join(output_folder, "clef_counts.txt")
-    with open(clef_counts_path, 'w') as file:
-        file.write(f"Treble Clefs: {treble_clef_count}\n")
-        file.write(f"Bass Clefs: {bass_clef_count}\n")
-    print(f"Clef counts saved at: {clef_counts_path}")
