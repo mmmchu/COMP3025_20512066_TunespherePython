@@ -3,6 +3,7 @@ import numpy as np
 from PIL import Image
 import cv2  # OpenCV for image processing
 
+
 def apply_method1(image_array):
     """Apply Canny edge detection with small dilation."""
     # Convert image to OpenCV format (uint8 array)
@@ -19,7 +20,8 @@ def apply_method1(image_array):
 
 
 def apply_method2(image_array):
-    """Remove stems while preserving noteheads using median blur, adaptive thresholding, and morphological operations."""
+    """Remove stems while preserving noteheads using median blur, adaptive thresholding, and morphological
+    operations."""
 
     # Convert image to OpenCV format (uint8 array)
     processed_img_cv = image_array.astype(np.uint8)
@@ -55,9 +57,11 @@ def apply_method2(image_array):
 
     return blurred_img, adaptive_threshold, color_img_gaussian, color_img_closing
 
+cropped_img_color= None
 def detect_blobs(image, method_name, cropped_image_path=None):
     """Apply blob detection based on circularity, aspect ratio, and size, and save the results."""
     # Ensure image is in grayscale format (single-channel)
+    global cropped_img_color
     if len(image.shape) == 3:
         image_gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
     else:
@@ -122,9 +126,9 @@ def detect_blobs(image, method_name, cropped_image_path=None):
 
         # Apply filters and check distance from leftmost blob
         if (circularity > circularity_threshold and
-            aspect_ratio < aspect_ratio_threshold and
-            min_area < area < max_area and
-            (cx - leftmost_x) >= 50):  # Ensure the blob is at least 10 columns away
+                aspect_ratio < aspect_ratio_threshold and
+                min_area < area < max_area and
+                (cx - leftmost_x) >= 50):  # Ensure the blob is at least 10 columns away
 
             valid_blobs.append((cx, cy, area, solidity, contour_completeness))
 
@@ -155,6 +159,7 @@ def detect_blobs(image, method_name, cropped_image_path=None):
         print(f"Cropped image with blobs saved at: {cropped_blob_save_path}")
 
     return valid_blobs  # Return the list of valid blobs
+
 
 def draw_detected_dots_on_original(processed_image_path, valid_blobs, output_path):
     """Draw detected blobs onto the original processed image."""
@@ -205,7 +210,7 @@ def notes_detect(processed_image_path):
     print(f"Method 1 Dilated Canny edges image saved at: {dilated_edges_save_path}")
 
     # Apply blob detection on Method 1's output
-    valid_blobs_method1 = detect_blobs(dilated_edges, "method1_dilated_cannyedges")
+    detect_blobs(dilated_edges, "method1_dilated_cannyedges")
 
     # Apply Method 2 to the entire image
     blurred_img, adaptive_threshold, color_img_gaussian, color_img_closing = apply_method2(processed_img_array)

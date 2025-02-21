@@ -11,6 +11,7 @@ def check_notehead_attached_to_stem(image_path, save_path):
         print("Error: Unable to load image.")
         return None
 
+    # Convert to grayscale
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
     # Detect noteheads (assuming red and green circles indicate noteheads)
@@ -36,7 +37,7 @@ def check_notehead_attached_to_stem(image_path, save_path):
     for cnt in contours:
         x, y, w, h = cv2.boundingRect(cnt)
 
-        # Define a 12x12 bounding box around the notehead's center
+        # Define a bounding box around the notehead's center
         cx, cy = x + w // 2, y + h // 2
         x1, y1, x2, y2 = cx - 6, cy - 6, cx + 6, cy + 6
 
@@ -46,19 +47,49 @@ def check_notehead_attached_to_stem(image_path, save_path):
         # Check if any detected stem (vertical line) intersects this box
         if lines is not None:
             for line in lines:
-                for x_start, y_start, x_end, y_end in line:
+                x_start, y_start, x_end, y_end = line[0]
+
+                # Filter for vertical lines (angle close to 90 degrees)
+                angle = np.degrees(np.arctan2(y_end - y_start, x_end - x_start))
+                if abs(angle - 90) < 10:  # Allow a small margin for vertical lines
+                    # Check if the line intersects the notehead bounding box
                     if (x1 <= x_start <= x2 and y1 <= y_start <= y2) or (x1 <= x_end <= x2 and y1 <= y_end <= y2):
                         attached_noteheads.append((cx, cy))
                         break
 
-    # Sort noteheads by x-coordinate (left to right order)
-    sorted_noteheads = sorted(attached_noteheads, key=lambda note: note[0])
-
-    print(f"Total noteheads attached to stems: {len(sorted_noteheads)}")
-    print(f"Sorted Notehead Positions: {sorted_noteheads}")
+    print(f"Total noteheads attached to stems: {len(attached_noteheads)}")
 
     # Save the result image with bounding boxes
     cv2.imwrite(save_path, image)
     print(f"Result saved to: {save_path}")
 
-    return sorted_noteheads
+    return attached_noteheads
+
+
+def draw_yellow_line_on_beam(lines_image_path, notehead_image_path, output_path):
+    # Load the detected beam lines image (grayscale)
+    lines_img = cv2.imread(lines_image_path, cv2.IMREAD_GRAYSCALE)
+    if lines_img is None:
+        print(f"Error: Could not load {lines_image_path}")
+        return
+
+    # Load the notehead image (color) where we will draw the yellow line
+    notehead_img = cv2.imread(notehead_image_path)
+    if notehead_img is None:
+        print(f"Error: Could not load {notehead_image_path}")
+        return
+
+    # Find white pixels (beam lines) in lines.png
+    y_positions, x_positions = np.where(lines_img > 200)  # Find white pixels
+
+    if len(y_positions) == 0:
+        print("No beam lines detected in lines.png.")
+        return
+
+    # Draw yellow lines on the detected beam pixels
+    for y, x in zip(y_positions, x_positions):
+        notehead_img[y, x] = (0, 255, 255)  # Yellow color in BGR
+
+    # Save the output image
+    cv2.imwrite(output_path, notehead_img)
+    print(f"Yellow lines drawn on white parts and saved to: {output_path}")

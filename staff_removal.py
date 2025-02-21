@@ -2,6 +2,7 @@ import os
 import numpy as np
 from PIL import Image
 
+
 def calculate_histogram(binarized_image_path):
     print(f"Loading binarized image from: {binarized_image_path}")
 
@@ -110,4 +111,3 @@ def process_all_binarized_images(inputfolder):
     # Process each binarized image
     for binarized_image_path in binarized_image_paths:
         process_image(binarized_image_path)
-
