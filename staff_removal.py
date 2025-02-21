@@ -2,7 +2,6 @@ import os
 import numpy as np
 from PIL import Image
 
-
 def calculate_histogram(binarized_image_path):
     print(f"Loading binarized image from: {binarized_image_path}")
 
@@ -86,37 +85,10 @@ def crop_image(cleaned_img_array, staff_line_rows, height, width):
     return cropped_img_array
 
 
-def detect_bar_lines(cleaned_img_array, height, width):
-    """Detects vertical bar lines in a binarized image after removing staff lines."""
-
-    black_pixel_counts = np.sum(cleaned_img_array == 0, axis=0)
-
-    bar_threshold = height / 10  # Adjust threshold for detecting bar lines
-    bar_line_columns = [x for x, count in enumerate(black_pixel_counts) if count > bar_threshold]
-
-    bar_lines = []
-    prev_x = -10  # Initialize with an out-of-range value
-
-    for x in bar_line_columns:
-        if x - prev_x > 2:  # Ensure separate bar lines are detected
-            # Find the top and bottom y-coordinates
-            y_coords = np.where(cleaned_img_array[:, x] == 0)[0]
-            if len(y_coords) > 0:
-                y_top = y_coords[0]
-
-                bar_lines.append((x, y_top))  # Store full coordinates
-        prev_x = x
-
-    print(f"Detected bar lines with coordinates: {bar_lines}")
-    return bar_lines
-
 def process_image(binarized_image_path):
     staff_line_rows, binarized_img_array, height, width = calculate_histogram(binarized_image_path)
     cleaned_img_array = remove_staff_lines(binarized_img_array, staff_line_rows, height, width)
     cropped_img_array = crop_image(cleaned_img_array, staff_line_rows, height, width)
-
-    bar_lines = detect_bar_lines(cropped_img_array, cropped_img_array.shape[0], cropped_img_array.shape[1])
-    print(f"Final detected bar lines: {bar_lines}")
 
     cleaned_img = Image.fromarray(cropped_img_array)
     cleaned_image_path = os.path.join(os.path.dirname(binarized_image_path),
@@ -138,3 +110,4 @@ def process_all_binarized_images(inputfolder):
     # Process each binarized image
     for binarized_image_path in binarized_image_paths:
         process_image(binarized_image_path)
+

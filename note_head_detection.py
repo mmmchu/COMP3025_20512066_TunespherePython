@@ -229,5 +229,3 @@ def notes_detect(processed_image_path):
     # **New Step: Draw detected blobs onto original processed image**
     output_image_with_dots = os.path.join(output_folder, "processed_image_with_dots.png")
     draw_detected_dots_on_original(processed_image_path, valid_blobs_method2, output_image_with_dots)
-
-    # use the detected bar lines in staff removal, take the coords to remove the detection of noises
