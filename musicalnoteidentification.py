@@ -1,8 +1,7 @@
 import cv2
 import numpy as np
 
-
-def check_notehead_attached_to_stem(image_path, save_path):
+def check_notehead_attached_to_stem(image_path, save_path, bar_boxes):
     print(f"Loading processed image from: {image_path}")
 
     # Load the image
@@ -41,8 +40,16 @@ def check_notehead_attached_to_stem(image_path, save_path):
         cx, cy = x + w // 2, y + h // 2
         x1, y1, x2, y2 = cx - 6, cy - 6, cx + 6, cy + 6
 
-        # Draw bounding box on the image
-        cv2.rectangle(image, (x1, y1), (x2, y2), (255, 0, 0), 2)
+        # Check if the bounding box is within a yellow box (bar_boxes)
+        inside_any_bar = False
+        for bx, by, bw, bh in bar_boxes:
+            if bx <= x1 and by <= y1 and (bx + bw) >= x2 and (by + bh) >= y2:
+                inside_any_bar = True
+                break
+
+        if inside_any_bar:
+            # Draw bounding box on the image (only if inside yellow box)
+            cv2.rectangle(image, (x1, y1), (x2, y2), (255, 0, 0), 2)
 
         # Check if any detected stem (vertical line) intersects this box
         if lines is not None:
@@ -65,18 +72,20 @@ def check_notehead_attached_to_stem(image_path, save_path):
 
     return attached_noteheads
 
+
+
 def draw_boundingbox(barboundbox_image_path, notehead_image_path, output_path):
     # Load the barboundbox image (with the green bounding boxes)
     barboundbox_image = cv2.imread(barboundbox_image_path)
     if barboundbox_image is None:
         print(f"Error: Could not load {barboundbox_image_path}")
-        return
+        return None
 
     # Load the notehead image
     notehead_image = cv2.imread(notehead_image_path)
     if notehead_image is None:
         print(f"Error: Could not load {notehead_image_path}")
-        return
+        return None
 
     # Define the lower and upper bounds for the green color in BGR format
     lower_green = np.array([0, 200, 0])  # Lower bound for green
@@ -88,55 +97,24 @@ def draw_boundingbox(barboundbox_image_path, notehead_image_path, output_path):
     # Find contours of the green bounding boxes
     contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
+    bar_boxes = []
     if not contours:
         print("No green bounding boxes found in the barboundbox image.")
-        return
+        return None
 
-    # Draw all yellow bounding boxes on the notehead image and store their coordinates
-    yellow_boxes = []
+    # Draw all yellow bounding boxes on the notehead image
     for contour in contours:
-        # Get the bounding box coordinates for each contour
         x, y, w, h = cv2.boundingRect(contour)
-        # Draw the bounding box on the notehead image
         cv2.rectangle(notehead_image, (x, y), (x + w, y + h), (0, 255, 255), 2)  # Yellow color in BGR
-        # Store the yellow bounding box coordinates
-        yellow_boxes.append((x, y, x + w, y + h))
-
-    # Remove blue bounding boxes or red dots outside the yellow bounding boxes
-    # Define the lower and upper bounds for blue and red colors
-    lower_blue = np.array([200, 0, 0])  # Lower bound for blue
-    upper_blue = np.array([255, 100, 100])  # Upper bound for blue
-    lower_red = np.array([0, 0, 200])  # Lower bound for red
-    upper_red = np.array([100, 100, 255])  # Upper bound for red
-
-    # Create masks for blue and red colors
-    mask_blue = cv2.inRange(notehead_image, lower_blue, upper_blue)
-    mask_red = cv2.inRange(notehead_image, lower_red, upper_red)
-
-    # Combine the blue and red masks
-    mask_combined = cv2.bitwise_or(mask_blue, mask_red)
-
-    # Find contours of the blue bounding boxes and red dots
-    contours_combined, _ = cv2.findContours(mask_combined, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-
-    for contour in contours_combined:
-        # Get the bounding box coordinates for each blue/red contour
-        x, y, w, h = cv2.boundingRect(contour)
-        # Check if the center of the blue/red contour is inside any yellow bounding box
-        cx, cy = x + w // 2, y + h // 2  # Center of the blue/red contour
-        inside_yellow_box = False
-        for yellow_box in yellow_boxes:
-            x1, y1, x2, y2 = yellow_box
-            if x1 <= cx <= x2 and y1 <= cy <= y2:
-                inside_yellow_box = True
-                break
-        # If the blue/red contour is not inside any yellow bounding box, remove it
-        if not inside_yellow_box:
-            cv2.rectangle(notehead_image, (x, y), (x + w, y + h), (0, 0, 0), -1)  # Fill with black to remove
+        bar_boxes.append((x, y, w, h))  # Store bounding box
 
     # Save the result
     cv2.imwrite(output_path, notehead_image)
     print(f"Filtered bounding boxes and saved to {output_path}")
+
+    return bar_boxes  # Return bounding box list
+
+
 
 
 def draw_yellow_line_on_beam(lines_image_path, notehead_image_path, output_path):

@@ -49,25 +49,23 @@ def main():
             bar_lines_path = os.path.join(bar_folder, 'bar_bounding_boxes.png')
             finalz_output_path = os.path.join(result_folder, 'notehead_with_yellow_and_bar_line.png')
 
-            # Process noteheads and attach stem
-            if os.path.exists(notehead_blobs_path):
-                check_notehead_attached_to_stem(notehead_blobs_path, result_path)
+            if os.path.exists(bar_lines_path):
+                bar_boxes = draw_boundingbox(bar_lines_path, result_path, finalz_output_path)
+            else:
+                bar_boxes = None
 
-                # Draw yellow line on beam
+            if os.path.exists(notehead_blobs_path):
+                if bar_boxes:
+                    check_notehead_attached_to_stem(notehead_blobs_path, result_path, bar_boxes)
+                else:
+                    print("Skipping notehead processing because no bar bounding boxes were found.")
+
                 if os.path.exists(beam_lines_path):
                     draw_yellow_line_on_beam(beam_lines_path, result_path, final_output_path)
                 else:
                     print(f"Error: Beam detection output not found at {beam_lines_path}")
-
             else:
                 print(f"Error: Notehead blob image not found at {notehead_blobs_path}")
-
-            # Always process bar lines if the file exists (moved outside else)
-            if os.path.exists(bar_lines_path):
-                draw_boundingbox(bar_lines_path, result_path, finalz_output_path)
-            else:
-                print(f"Error: Bar detection output not found at {bar_lines_path}")
-
 
 if __name__ == "__main__":
     main()
