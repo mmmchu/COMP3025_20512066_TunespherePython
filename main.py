@@ -51,14 +51,13 @@ def main():
 
             if os.path.exists(notehead_blobs_path):
                 if bar_boxes:
-                    check_notehead_attached_to_stem(notehead_blobs_path, result_path, bar_boxes)
+                    check_notehead_attached_to_stem(notehead_blobs_path, result_path,bar_boxes, staff_line_rows)
 
                 else:
                     print("Skipping notehead processing because no bar bounding boxes were found.")
 
                 if os.path.exists(beam_lines_path):
                     draw_yellow_line_on_beam(beam_lines_path, result_path, final_output_path)
-
 
                 else:
                     print(f"Error: Beam detection output not found at {beam_lines_path}")

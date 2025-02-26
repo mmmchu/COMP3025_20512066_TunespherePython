@@ -1,59 +1,85 @@
 import cv2
 import numpy as np
 
-def check_notehead_attached_to_stem(image_path, save_path, bar_boxes):
+def check_notehead_attached_to_stem(image_path, save_path, bar_boxes,staff_lines):
     # Load the image
     image = cv2.imread(image_path)
     if image is None:
         print("Error: Unable to load image.")
         return None
 
-    # Detect noteheads (assuming red and green circles indicate noteheads)
-    lower_red = np.array([0, 0, 150])  # Lower bound for red
-    upper_red = np.array([100, 100, 255])  # Upper bound for red
+    # Define color thresholds
+    lower_red, upper_red = np.array([0, 0, 150]), np.array([100, 100, 255])  # Unfilled noteheads
+    lower_green, upper_green = np.array([0, 150, 0]), np.array([100, 255, 100])  # Filled noteheads
+    lower_yellow, upper_yellow = np.array([0, 150, 150]), np.array([100, 255, 255])  # Beams
+
+    # Create masks for noteheads and beams
     mask_red = cv2.inRange(image, lower_red, upper_red)
-
-    lower_green = np.array([0, 150, 0])  # Lower bound for green
-    upper_green = np.array([100, 255, 100])  # Upper bound for green
     mask_green = cv2.inRange(image, lower_green, upper_green)
-
+    mask_yellow = cv2.inRange(image, lower_yellow, upper_yellow)
     mask_noteheads = cv2.bitwise_or(mask_red, mask_green)
 
     # Find contours of noteheads
     contours, _ = cv2.findContours(mask_noteheads, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
-    # Create a mask for keeping valid noteheads
+    # Mask for valid noteheads
     valid_mask = np.zeros_like(mask_noteheads)
 
-    notehead_positions = []  # Store (x, y) positions
+    note_types = []
+    note_positions = []
+    note_staff_positions = []
+    note_durations = []
 
     for cnt in contours:
         x, y, w, h = cv2.boundingRect(cnt)
-
-        # Define a bounding box around the notehead's center
-        cx, cy = x + w // 2, y + h // 2
+        cx, cy = x + w // 2, y + h // 2  # Notehead center
         x1, y1, x2, y2 = cx - 6, cy - 6, cx + 6, cy + 6
 
-        # Check if the bounding box is inside a yellow box (bar_boxes)
-        inside_any_bar = False
-        for bx, by, bw, bh in bar_boxes:
-            if not (x2 < bx or x1 > bx + bw or y2 < by or y1 > by + bh):  # Overlap condition
-                inside_any_bar = True
-                break
+        # Determine notehead type
+        is_filled = mask_green[cy, cx] > 0
+        is_unfilled = mask_red[cy, cx] > 0
+
+        # Check if notehead is inside a bar box
+        inside_any_bar = any(not (x2 < bx or x1 > bx + bw or y2 < by or y1 > by + bh) for bx, by, bw, bh in bar_boxes)
 
         if inside_any_bar:
-            # Keep only the valid noteheads in the mask
+            # Keep valid noteheads
             cv2.drawContours(valid_mask, [cnt], -1, 255, thickness=cv2.FILLED)
-            notehead_positions.append((cx, cy))  # Store as (x, y) tuple
+            note_positions.append((cx, cy))
 
-    # Use the valid mask to keep only the noteheads inside blue boxes
-    image[np.where((mask_noteheads > 0) & (valid_mask == 0))] = [255, 255, 255]  # Convert invalid dots to white
+            # Check for stem attachment
+            stem_roi = mask_noteheads[y1:y2, x1:x2]
+            has_stem = np.any(stem_roi > 0)
 
-    # Save the cleaned image
+            # Check if note is near a beam
+            beam_roi = mask_yellow[y1 - 10:y2 + 10, x1:x2]
+            is_quaver = np.any(beam_roi > 0)
+
+            # Classify notes
+            if is_filled:
+                note_types.append("Quaver" if is_quaver else "Crotchet")
+                note_durations.append(0.5 if is_quaver else 1)
+            elif is_unfilled:
+                note_types.append("Minim" if has_stem else "Semibreve")
+                note_durations.append(2 if has_stem else 4)
+
+            # Find nearest staff line
+            nearest_staff_line = min(staff_lines, key=lambda line: abs(line - cy))
+            note_staff_positions.append(nearest_staff_line)
+
+    # Update image to remove invalid noteheads
+    image[np.where((mask_noteheads > 0) & (valid_mask == 0))] = [255, 255, 255]
+
+    # Save processed image
     cv2.imwrite(save_path, image)
-    print(f"Filtered image saved to: {save_path}")
+    print(f"Processed image saved to: {save_path}")
 
-    return notehead_positions
+    # Print results
+    for note_type, duration, (x, y), staff_y in zip(note_types, note_durations, note_positions, note_staff_positions):
+        print(
+            f"Note at ({x}, {y}) classified as {note_type}, Duration: {duration} beats, Nearest staff line at y={staff_y}")
+
+    return note_types, note_positions, note_staff_positions, note_durations
 
 
 def draw_boundingbox(barboundbox_image_path, notehead_image_path, output_path):
@@ -125,4 +151,6 @@ def draw_yellow_line_on_beam(lines_image_path, notehead_image_path, output_path)
     # Save the output image
     cv2.imwrite(output_path, notehead_img)
     print(f"Yellow lines drawn on white parts and saved to: {output_path}")
+
+
 
