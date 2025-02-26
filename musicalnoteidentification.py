@@ -8,9 +8,6 @@ def check_notehead_attached_to_stem(image_path, save_path, bar_boxes):
         print("Error: Unable to load image.")
         return None
 
-    # Convert to grayscale
-    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-
     # Detect noteheads (assuming red and green circles indicate noteheads)
     lower_red = np.array([0, 0, 150])  # Lower bound for red
     upper_red = np.array([100, 100, 255])  # Upper bound for red
@@ -25,11 +22,10 @@ def check_notehead_attached_to_stem(image_path, save_path, bar_boxes):
     # Find contours of noteheads
     contours, _ = cv2.findContours(mask_noteheads, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
-    # Detect vertical stems using edge detection
-    edges = cv2.Canny(gray, 50, 150, apertureSize=3)
-    lines = cv2.HoughLinesP(edges, 1, np.pi / 180, threshold=50, minLineLength=20, maxLineGap=5)
+    # Create a mask for keeping valid noteheads
+    valid_mask = np.zeros_like(mask_noteheads)
 
-    attached_noteheads = []
+    notehead_positions = []  # Store (x, y) positions
 
     for cnt in contours:
         x, y, w, h = cv2.boundingRect(cnt)
@@ -38,7 +34,7 @@ def check_notehead_attached_to_stem(image_path, save_path, bar_boxes):
         cx, cy = x + w // 2, y + h // 2
         x1, y1, x2, y2 = cx - 6, cy - 6, cx + 6, cy + 6
 
-        # Check if any part of the bounding box is inside a yellow box (bar_boxes)
+        # Check if the bounding box is inside a yellow box (bar_boxes)
         inside_any_bar = False
         for bx, by, bw, bh in bar_boxes:
             if not (x2 < bx or x1 > bx + bw or y2 < by or y1 > by + bh):  # Overlap condition
@@ -46,29 +42,18 @@ def check_notehead_attached_to_stem(image_path, save_path, bar_boxes):
                 break
 
         if inside_any_bar:
-            # Draw bounding box on the image (only if inside or touching yellow box)
-            cv2.rectangle(image, (x1, y1), (x2, y2), (255, 0, 0), 2)
+            # Keep only the valid noteheads in the mask
+            cv2.drawContours(valid_mask, [cnt], -1, 255, thickness=cv2.FILLED)
+            notehead_positions.append((cx, cy))  # Store as (x, y) tuple
 
-        # Check if any detected stem (vertical line) intersects this box
-        if lines is not None:
-            for line in lines:
-                x_start, y_start, x_end, y_end = line[0]
+    # Use the valid mask to keep only the noteheads inside blue boxes
+    image[np.where((mask_noteheads > 0) & (valid_mask == 0))] = [255, 255, 255]  # Convert invalid dots to white
 
-                # Filter for vertical lines (angle close to 90 degrees)
-                angle = np.degrees(np.arctan2(y_end - y_start, x_end - x_start))
-                if abs(angle - 90) < 10:  # Allow a small margin for vertical lines
-                    # Check if the line intersects the notehead bounding box
-                    if (x1 <= x_start <= x2 and y1 <= y_start <= y2) or (x1 <= x_end <= x2 and y1 <= y_end <= y2):
-                        attached_noteheads.append((cx, cy))
-                        break
-
-    print(f"Total noteheads attached to stems: {len(attached_noteheads)}")
-
-    # Save the result image with bounding boxes
+    # Save the cleaned image
     cv2.imwrite(save_path, image)
-    print(f"Result saved to: {save_path}")
+    print(f"Filtered image saved to: {save_path}")
 
-    return attached_noteheads
+    return notehead_positions
 
 
 def draw_boundingbox(barboundbox_image_path, notehead_image_path, output_path):
@@ -113,7 +98,6 @@ def draw_boundingbox(barboundbox_image_path, notehead_image_path, output_path):
     return yellow_boxes
 
 
-
 def draw_yellow_line_on_beam(lines_image_path, notehead_image_path, output_path):
     # Load the detected beam lines image (grayscale)
     lines_img = cv2.imread(lines_image_path, cv2.IMREAD_GRAYSCALE)
@@ -141,3 +125,4 @@ def draw_yellow_line_on_beam(lines_image_path, notehead_image_path, output_path)
     # Save the output image
     cv2.imwrite(output_path, notehead_img)
     print(f"Yellow lines drawn on white parts and saved to: {output_path}")
+

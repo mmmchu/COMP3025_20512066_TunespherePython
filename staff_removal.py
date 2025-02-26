@@ -99,7 +99,7 @@ def process_image(binarized_image_path):
     cleaned_img.save(cleaned_image_path)
 
     print(f"Staff line removal and cropping complete. Processed image saved to: {cleaned_image_path}")
-    return cleaned_image_path
+    return cleaned_image_path,staff_line_rows
 
 
 def process_all_binarized_images(inputfolder):
