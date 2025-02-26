@@ -1,7 +1,8 @@
 import cv2
 import numpy as np
 
-def check_notehead_attached_to_stem(image_path, save_path, bar_boxes,staff_lines):
+
+def check_notehead_attached_to_stem(image_path, save_path, bar_boxes, staff_lines):
     # Load the image
     image = cv2.imread(image_path)
     if image is None:
@@ -29,6 +30,10 @@ def check_notehead_attached_to_stem(image_path, save_path, bar_boxes,staff_lines
     note_positions = []
     note_staff_positions = []
     note_durations = []
+    note_relative_positions = []
+
+    # Group staff lines into sets of 5 (assuming they are detected correctly)
+    staff_groups = [staff_lines[i:i + 5] for i in range(0, len(staff_lines), 5)]
 
     for cnt in contours:
         x, y, w, h = cv2.boundingRect(cnt)
@@ -63,9 +68,16 @@ def check_notehead_attached_to_stem(image_path, save_path, bar_boxes,staff_lines
                 note_types.append("Minim" if has_stem else "Semibreve")
                 note_durations.append(2 if has_stem else 4)
 
-            # Find nearest staff line
-            nearest_staff_line = min(staff_lines, key=lambda line: abs(line - cy))
+            # Find the closest staff group
+            closest_staff = min(staff_groups, key=lambda group: min(abs(line - cy) for line in group))
+
+            # Find nearest staff line within the closest staff
+            nearest_staff_line = min(closest_staff, key=lambda line: abs(line - cy))
             note_staff_positions.append(nearest_staff_line)
+
+            # Calculate relative position using only this staff group
+            relative_positions = [line - cy for line in closest_staff]
+            note_relative_positions.append(relative_positions)
 
     # Update image to remove invalid noteheads
     image[np.where((mask_noteheads > 0) & (valid_mask == 0))] = [255, 255, 255]
@@ -74,12 +86,17 @@ def check_notehead_attached_to_stem(image_path, save_path, bar_boxes,staff_lines
     cv2.imwrite(save_path, image)
     print(f"Processed image saved to: {save_path}")
 
-    # Print results
-    for note_type, duration, (x, y), staff_y in zip(note_types, note_durations, note_positions, note_staff_positions):
-        print(
-            f"Note at ({x}, {y}) classified as {note_type}, Duration: {duration} beats, Nearest staff line at y={staff_y}")
+    # Sort noteheads by x-coordinate before printing results
+    sorted_notes = sorted(
+        zip(note_positions, note_types, note_durations, note_staff_positions, note_relative_positions),
+        key=lambda item: item[0][0])
 
-    return note_types, note_positions, note_staff_positions, note_durations
+    # Print sorted results
+    for (x, y), note_type, duration, staff_y, rel_pos in sorted_notes:
+        print(f"Note at ({x}, {y}) classified as {note_type}, Duration: {duration} beats, "
+              f"Nearest staff line at y={staff_y}, Relative positions: {rel_pos}")
+
+    return note_types, note_positions, note_staff_positions, note_durations, note_relative_positions
 
 
 def draw_boundingbox(barboundbox_image_path, notehead_image_path, output_path):
