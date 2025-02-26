@@ -23,7 +23,7 @@ def pitch_detect(processed_image_path):
     print("Pitch processing complete.")
     return processed_img_array
 
-#sort the notehead identified  based on their horizontal position
+#sort the notehead identified based on their horizontal position
 
 #loop through the staff ranges and check for the noteheads which lie in each staff range
 
