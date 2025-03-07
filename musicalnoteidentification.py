@@ -27,6 +27,7 @@ def check_notehead_attached_to_stem(image_path, save_path, bar_boxes, staff_line
 
     # Group staff lines into sets of 5 (assuming they are detected correctly)
     staff_groups = [staff_lines[i:i + 5] for i in range(0, len(staff_lines), 5)]
+    print("Staff Groups:", staff_groups)
 
     # Assign bars based on Y-sorting
     bar_notes = {}  # Dictionary to store noteheads within each bar
@@ -129,7 +130,7 @@ def check_notehead_attached_to_stem(image_path, save_path, bar_boxes, staff_line
         for i in range(len(note_positions)):
             file.write(f"{note_types[i]},{note_positions[i][0]},{note_positions[i][1]},"
                        f"{note_staff_positions[i]},{note_durations[i]},"
-                       f"{note_relative_positions[i]}\n")  # Keep bar number
+                       f"{note_relative_positions[i]},{note_bars[i]}\n")  # Keep bar number
 
     print(f"Results saved to: {results_path}")
 

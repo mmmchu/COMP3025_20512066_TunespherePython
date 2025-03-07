@@ -11,7 +11,7 @@ from musicalnoteidentification import (
     draw_yellow_line_on_beam,
     draw_boundingbox,
 )
-from midifile import (read_clef_classification,read_notehead_classification)
+from midifile import (read_clef_classification,read_notehead_classification,assign_clefs_to_bars)
 def main():
     # Paths
     pdf_path = 'Image/music1.pdf'
@@ -33,6 +33,7 @@ def main():
         processed_image_path,staff_line_rows = process_image(binarized_image_path)
 
         if processed_image_path:
+            print(f"Staff line rows: {staff_line_rows}")
             crop_clef(processed_image_path)
             notes_detect(processed_image_path)
             stem_detect(processed_image_path)
@@ -45,6 +46,8 @@ def main():
 
             print(clefs)  # Debugging: check if clefs are read correctly
             print(noteheads)  # Debugging: check if noteheads are read correctly
+
+            assign_clefs_to_bars(noteheads, clefs)
 
 
             notehead_blobs_path = os.path.join(notehead_folder, 'processed_image_with_dots.png')
