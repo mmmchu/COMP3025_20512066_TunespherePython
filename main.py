@@ -11,6 +11,7 @@ from musicalnoteidentification import (
     draw_yellow_line_on_beam,
     draw_boundingbox,
 )
+from midifile import (read_clef_classification,read_notehead_classification)
 def main():
     # Paths
     pdf_path = 'Image/music1.pdf'
@@ -19,6 +20,9 @@ def main():
     beam_folder = 'beam_images'
     bar_folder = 'bar_line_images'
     result_folder = 'musical_noteidentification'
+    # File paths
+    clef_file = "clef_images/clef_classification.txt"  # Replace with actual file path
+    notehead_file = "results.txt"  # File containing notehead classification
 
     os.makedirs(result_folder, exist_ok=True)
 
@@ -34,6 +38,14 @@ def main():
             stem_detect(processed_image_path)
             beam_detect(processed_image_path)
             bar_detect(processed_image_path)
+
+
+            clefs = read_clef_classification(clef_file)
+            noteheads = read_notehead_classification(notehead_file)
+
+            print(clefs)  # Debugging: check if clefs are read correctly
+            print(noteheads)  # Debugging: check if noteheads are read correctly
+
 
             notehead_blobs_path = os.path.join(notehead_folder, 'processed_image_with_dots.png')
             result_path = os.path.join(result_folder, 'bound_box_notehead.png')
@@ -63,6 +75,8 @@ def main():
                     print(f"Error: Beam detection output not found at {beam_lines_path}")
             else:
                 print(f"Error: Notehead blob image not found at {notehead_blobs_path}")
+
+
 
 
 if __name__ == "__main__":

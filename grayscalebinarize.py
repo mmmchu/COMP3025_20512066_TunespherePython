@@ -2,8 +2,6 @@ import fitz  # PyMuPDF
 from PIL import Image
 import os
 
-
-
 def pdf_to_grayscale_and_binarize(pdfpath, outputfolder, threshold=185):
     print(f"Processing PDF: {pdfpath}")
 
@@ -21,7 +19,7 @@ def pdf_to_grayscale_and_binarize(pdfpath, outputfolder, threshold=185):
     pix = page.get_pixmap()
     # Assuming pix is an object that has width, height, and samples attributes
     width, height = pix.width, pix.height
-    mode = "RGB"  # or whatever mode you're using
+    mode = "RGB"
     data = pix.samples
 
     print(f"Loaded page {page_number + 1} from the PDF.")

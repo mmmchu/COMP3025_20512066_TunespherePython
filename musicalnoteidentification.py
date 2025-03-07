@@ -1,7 +1,6 @@
 import cv2
 import numpy as np
 
-
 def check_notehead_attached_to_stem(image_path, save_path, bar_boxes, staff_lines):
     # Load the image
     image = cv2.imread(image_path)
@@ -26,45 +25,75 @@ def check_notehead_attached_to_stem(image_path, save_path, bar_boxes, staff_line
     # Mask for valid noteheads
     valid_mask = np.zeros_like(mask_noteheads)
 
-    note_types = []
-    note_positions = []
-    note_staff_positions = []
-    note_durations = []
-    note_relative_positions = []
-
     # Group staff lines into sets of 5 (assuming they are detected correctly)
     staff_groups = [staff_lines[i:i + 5] for i in range(0, len(staff_lines), 5)]
+
+    # Assign bars based on Y-sorting
+    bar_notes = {}  # Dictionary to store noteheads within each bar
+
+    # Sort contours by Y-coordinate (top to bottom) to assign bars
+    contours = sorted(contours, key=lambda cnt: cv2.boundingRect(cnt)[1])
+
+    current_bar = 1
+    previous_y = None  # Track previous notehead's Y-coordinate
 
     for cnt in contours:
         x, y, w, h = cv2.boundingRect(cnt)
         cx, cy = x + w // 2, y + h // 2  # Notehead center
-        x1, y1, x2, y2 = cx - 6, cy - 6, cx + 6, cy + 6
-
-        # Determine notehead type
-        is_filled = mask_green[cy, cx] > 0
-        is_unfilled = mask_red[cy, cx] > 0
+        x1, y1, x2, y2 = cx - 6, cy - 6, cx + 6, cy + 6  # Fixed 12x12 bounding box
 
         # Check if notehead is inside a bar box
         inside_any_bar = any(not (x2 < bx or x1 > bx + bw or y2 < by or y1 > by + bh) for bx, by, bw, bh in bar_boxes)
 
         if inside_any_bar:
+            # Assign a new bar if the Y difference is more than 30 pixels
+            if previous_y is not None and abs(cy - previous_y) > 30:
+                current_bar += 1
+
+            previous_y = cy  # Update previous notehead's Y-coordinate
+
+            # Store notehead in corresponding bar
+            if current_bar not in bar_notes:
+                bar_notes[current_bar] = []
+            bar_notes[current_bar].append((cnt, cx, cy))
+
             # Keep valid noteheads
             cv2.drawContours(valid_mask, [cnt], -1, 255, thickness=cv2.FILLED)
-            note_positions.append((cx, cy))
 
-            # Check for stem attachment
+    # Lists to store final note information
+    note_types = []
+    note_positions = []
+    note_staff_positions = []
+    note_durations = []
+    note_relative_positions = []
+    note_bars = []
+
+    # Sort noteheads **within each bar** by X-coordinate and process them
+    for bar, notes in bar_notes.items():
+        notes.sort(key=lambda item: item[1])  # Sort by X-coordinate
+        for cnt, cx, cy in notes:
+            x1, y1, x2, y2 = cx - 6, cy - 6, cx + 6, cy + 6  # Fixed 12x12 bounding box
+
+            # Extract 12x12 region for stem detection
             stem_roi = mask_noteheads[y1:y2, x1:x2]
             has_stem = np.any(stem_roi > 0)
 
-            # Check if note is near a beam
-            beam_roi = mask_yellow[y1 - 10:y2 + 10, x1:x2]
-            is_quaver = np.any(beam_roi > 0)
+            # Check for beam overlap in stem ROI
+            beam_roi = mask_yellow[y1:y2, x1:x2]
+            stem_touches_beam = np.any(beam_roi > 0)
+
+            # Ensure notehead center is NOT on a beam
+            notehead_on_beam = mask_yellow[cy, cx] > 0
 
             # Classify notes
-            if is_filled:
-                note_types.append("Quaver" if is_quaver else "Crotchet")
-                note_durations.append(0.5 if is_quaver else 1)
-            elif is_unfilled:
+            if mask_green[cy, cx] > 0:
+                if stem_touches_beam and not notehead_on_beam:
+                    note_types.append("Quaver")
+                    note_durations.append(0.5)
+                else:
+                    note_types.append("Crotchet")
+                    note_durations.append(1)
+            elif mask_red[cy, cx] > 0:
                 note_types.append("Minim" if has_stem else "Semibreve")
                 note_durations.append(2 if has_stem else 4)
 
@@ -79,6 +108,14 @@ def check_notehead_attached_to_stem(image_path, save_path, bar_boxes, staff_line
             relative_positions = [line - cy for line in closest_staff]
             note_relative_positions.append(relative_positions)
 
+            # Store note position and bar
+            note_positions.append((cx, cy))
+            note_bars.append(bar)
+
+            # Draw coordinates in small red text
+            cv2.putText(image, f"({cx},{cy})", (cx + 5, cy - 5), cv2.FONT_HERSHEY_SIMPLEX,
+                        0.25, (0, 0, 255), 1, cv2.LINE_AA)
+
     # Update image to remove invalid noteheads
     image[np.where((mask_noteheads > 0) & (valid_mask == 0))] = [255, 255, 255]
 
@@ -86,19 +123,18 @@ def check_notehead_attached_to_stem(image_path, save_path, bar_boxes, staff_line
     cv2.imwrite(save_path, image)
     print(f"Processed image saved to: {save_path}")
 
-    # Sort noteheads by x-coordinate before printing results
-    sorted_notes = sorted(
-        zip(note_positions, note_types, note_durations, note_staff_positions, note_relative_positions),
-        key=lambda item: item[0][0])
+    # Save results to a text file
+    results_path = "results.txt"
+    with open(results_path, "w") as file:
+        for i in range(len(note_positions)):
+            file.write(f"{note_types[i]},{note_positions[i][0]},{note_positions[i][1]},"
+                       f"{note_staff_positions[i]},{note_durations[i]},"
+                       f"{note_relative_positions[i]}\n")  # Keep bar number
 
-    # Print sorted results
-    for (x, y), note_type, duration, staff_y, rel_pos in sorted_notes:
-        print(f"Note at ({x}, {y}) classified as {note_type}, Duration: {duration} beats, "
-              f"Nearest staff line at y={staff_y}, Relative positions: {rel_pos}")
+    print(f"Results saved to: {results_path}")
 
-    return note_types, note_positions, note_staff_positions, note_durations, note_relative_positions
-
-
+    # Return note information sorted into bars
+    return note_types, note_positions, note_staff_positions, note_durations, note_relative_positions, note_bars
 def draw_boundingbox(barboundbox_image_path, notehead_image_path, output_path):
     # Load the barboundbox image (with the green bounding boxes)
     barboundbox_image = cv2.imread(barboundbox_image_path)
@@ -168,6 +204,3 @@ def draw_yellow_line_on_beam(lines_image_path, notehead_image_path, output_path)
     # Save the output image
     cv2.imwrite(output_path, notehead_img)
     print(f"Yellow lines drawn on white parts and saved to: {output_path}")
-
-
-

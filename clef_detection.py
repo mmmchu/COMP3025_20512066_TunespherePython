@@ -119,3 +119,12 @@ def crop_clef(processed_image_path):
     blob_detection_path = os.path.join(output_folder, "blob_detection_with_dots.png")
     cv2.imwrite(blob_detection_path, clef_img_color)
     print(f"Blob detection image with blue dots saved at: {blob_detection_path}")
+
+    # Save clef classification to a text file
+    classification_txt_path = os.path.join(output_folder, "clef_classification.txt")
+    with open(classification_txt_path, "w") as file:
+        for cx, cy, clef_type in clef_labels:
+            file.write(f"{clef_type},{cx}, {cy}\n")
+
+    print(f"Clef classification saved at: {classification_txt_path}")
+
