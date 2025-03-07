@@ -1,10 +1,16 @@
-from midiutil import MIDIFile
 import csv
 import re
 
-# Define pitch mappings for Treble and Bass clefs
-TREBLE_PITCHES = ["E4", "F4", "G4", "A4", "B4", "C5", "D5", "E5", "F5"]
-BASS_PITCHES = ["G2", "A2", "B2", "C3", "D3", "E3", "F3", "G3", "A3"]
+def get_staff_line_from_relative_positions(relative_positions):
+    """Finds the closest staff line (1 to 5) based on the smallest relative position."""
+    if len(relative_positions) != 5:
+        print(f"Warning: Expected 5 relative positions, but got {len(relative_positions)}. Data may be incorrect.")
+        return None
+
+    # Find the index of the smallest value (1st staff line = index 0 → 1, etc.)
+    closest_staff_index = relative_positions.index(min(relative_positions))
+
+    return closest_staff_index + 1  # Convert 0-based index to 1-based staff line
 
 def read_notehead_classification(file_path):
     """Reads the notehead classification file and extracts noteheads with labeled numerical values, including bar numbers."""
@@ -26,12 +32,15 @@ def read_notehead_classification(file_path):
                     staff_y = int(row[3].strip())
                     duration = float(row[4].strip())
 
-                    # Extract numbers from relative_positions, removing brackets
+                    # Extract numbers from relative_positions (column 5 to second-last)
                     raw_positions = " ".join(row[5:-1]).strip()  # Exclude last column (bar number)
                     match = re.findall(r'-?\d+', raw_positions)  # Extract all numbers
 
                     # Convert extracted strings to integers safely
                     relative_positions = [int(p) for p in match]
+
+                    # Get the nearest staff line (1 to 5)
+                    staff_line_number = get_staff_line_from_relative_positions(relative_positions)
 
                     # Extract the bar number (last element)
                     bar_number = int(row[-1].strip().strip(']'))  # Remove any stray closing bracket
@@ -44,10 +53,14 @@ def read_notehead_classification(file_path):
                         'staff_y': staff_y,
                         'duration': duration,
                         'relative_positions': relative_positions,
+                        'staff_line': staff_line_number,  # Staff line (1-5)
                         'bar': bar_number
                     }
 
                     noteheads.append(parsed_notehead)
+
+                    # Debugging output
+                    print(f"Note at ({note_x}, {note_y}) in bar {bar_number} closest to staff line {staff_line_number} (Smallest Rel Pos: {min(relative_positions)})")
 
                 except ValueError as ve:
                     print(f"Skipping invalid row {row}: {ve}")  # Log issue for debugging
@@ -74,18 +87,6 @@ def read_clef_classification(file_path):
 
     return clefs
 
-def get_pitch(relative_position, clef):
-    """Returns the pitch name based on relative staff position and clef type."""
-    if clef == "T":
-        pitch_list = TREBLE_PITCHES
-    else:
-        pitch_list = BASS_PITCHES
-
-    # Ensure the index is within bounds
-    if 0 <= relative_position < len(pitch_list):
-        return pitch_list[relative_position]
-    return "Unknown"  # For positions out of range
-
 def match_clef_to_staff(note_y, clefs):
     """Find the closest clef to determine if it's a treble or bass clef."""
     closest_clef = min(clefs, key=lambda c: abs(c[2] - note_y))  # Find closest clef by Y-position
@@ -105,10 +106,10 @@ def assign_clefs_to_bars(noteheads, clefs):
         # Assign clef sequentially (one per bar)
         if bar_number not in bar_clef_map:
             if clef_index < num_clefs:
-                bar_clef_map[bar_number] = clefs[clef_index]
+                bar_clef_map[bar_number] = clefs[clef_index][0]  # Store only clef type ('T' or 'B')
                 clef_index += 1
             else:
-                bar_clef_map[bar_number] = clefs[-1]  # Use last clef if bars > clefs
+                bar_clef_map[bar_number] = clefs[-1][0]  # Use last clef if bars > clefs
 
         # Print the note with its assigned clef
         clef = bar_clef_map[bar_number]

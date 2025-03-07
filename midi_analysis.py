@@ -42,5 +42,5 @@ def analyze_midi(file_path):
 
 
 # Analyze the given MIDI file
-midi_file = "output.mid"
+midi_file = "ori.mid"
 analyze_midi(midi_file)

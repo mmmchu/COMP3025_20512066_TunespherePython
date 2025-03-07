@@ -29,7 +29,6 @@ def calculate_histogram(binarized_image_path):
     staff_threshold = width / 3
     print(f"Staff threshold: {staff_threshold}")
     staff_line_rows = [i for i, count in enumerate(black_pixel_counts) if count > staff_threshold]
-    print(f"Identified staff line rows (total {len(staff_line_rows)}): {staff_line_rows}")
 
     return staff_line_rows, binarized_img_array, height, width
 
@@ -88,18 +87,26 @@ def crop_image(cleaned_img_array, staff_line_rows, height, width):
 
 def process_image(binarized_image_path):
     staff_line_rows, binarized_img_array, height, width = calculate_histogram(binarized_image_path)
+
+    # Save cropped image *without* removing staff lines
+    cropped_img_array_with_staff = crop_image(binarized_img_array, staff_line_rows, height, width)
+    cropped_img_with_staff = Image.fromarray(cropped_img_array_with_staff)
+    cropped_image_path_with_staff = os.path.join(os.path.dirname(binarized_image_path),
+                                                 f"{os.path.basename(binarized_image_path).replace('.png', '_cropped_with_staff.png')}")
+    cropped_img_with_staff.save(cropped_image_path_with_staff)
+
+    # Save cropped image *after* removing staff lines
     cleaned_img_array = remove_staff_lines(binarized_img_array, staff_line_rows, height, width)
-    cropped_img_array = crop_image(cleaned_img_array, staff_line_rows, height, width)
+    cropped_img_array_without_staff = crop_image(cleaned_img_array, staff_line_rows, height, width)
+    cropped_img_without_staff = Image.fromarray(cropped_img_array_without_staff)
+    cropped_image_path_without_staff = os.path.join(os.path.dirname(binarized_image_path),
+                                                    f"{os.path.basename(binarized_image_path).replace('.png', '_cropped_without_staff.png')}")
+    cropped_img_without_staff.save(cropped_image_path_without_staff)
 
-    cleaned_img = Image.fromarray(cropped_img_array)
-    cleaned_image_path = os.path.join(os.path.dirname(binarized_image_path),
-                                      f"{os.path.basename(binarized_image_path).replace('.png', '_cropped.png')}")
+    print(f"Cropped image with staff lines saved to: {cropped_image_path_with_staff}")
+    print(f"Cropped image without staff lines saved to: {cropped_image_path_without_staff}")
 
-    print(f"Saving processed image to: {cleaned_image_path}")
-    cleaned_img.save(cleaned_image_path)
-
-    print(f"Staff line removal and cropping complete. Processed image saved to: {cleaned_image_path}")
-    return cleaned_image_path,staff_line_rows
+    return cropped_image_path_with_staff, cropped_image_path_without_staff
 
 
 def process_all_binarized_images(inputfolder):

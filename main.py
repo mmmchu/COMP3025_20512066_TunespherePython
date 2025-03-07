@@ -3,6 +3,7 @@ from grayscalebinarize import pdf_to_grayscale_and_binarize
 from staff_removal import process_image
 from clef_detection import crop_clef
 from note_head_detection import notes_detect
+from staff_line_row_index import getstafflinerow
 from stem_detection import stem_detect
 from beam_detection import beam_detect
 from bar_lines_detection import bar_detect
@@ -11,7 +12,9 @@ from musicalnoteidentification import (
     draw_yellow_line_on_beam,
     draw_boundingbox,
 )
-from midifile import (read_clef_classification,read_notehead_classification,assign_clefs_to_bars)
+from midifile import (read_clef_classification,read_notehead_classification)
+
+
 def main():
     # Paths
     pdf_path = 'Image/music1.pdf'
@@ -20,9 +23,11 @@ def main():
     beam_folder = 'beam_images'
     bar_folder = 'bar_line_images'
     result_folder = 'musical_noteidentification'
+
     # File paths
-    clef_file = "clef_images/clef_classification.txt"  # Replace with actual file path
-    notehead_file = "results.txt"  # File containing notehead classification
+    clef_file = "clef_images/clef_classification.txt"
+    notehead_file = "results.txt"
+    process_image_path = "processed_images/music1_pg_1_BN_cropped_with_staff.png"
 
     os.makedirs(result_folder, exist_ok=True)
 
@@ -30,56 +35,55 @@ def main():
     binarized_image_path = pdf_to_grayscale_and_binarize(pdf_path, output_folder)
 
     if binarized_image_path:
-        processed_image_path,staff_line_rows = process_image(binarized_image_path)
+        processed_image_path = process_image(binarized_image_path)
 
         if processed_image_path:
-            print(f"Staff line rows: {staff_line_rows}")
             crop_clef(processed_image_path)
             notes_detect(processed_image_path)
             stem_detect(processed_image_path)
             beam_detect(processed_image_path)
             bar_detect(processed_image_path)
 
+            # Get staff line row indexes
+            staff_line_rows, total_staff_lines = getstafflinerow(process_image_path, "outputstaffline.png")
+            print(f"Total Staff Lines Detected: {total_staff_lines}")
+            print(f"Staff Line Row Indexes: {staff_line_rows}")  # You can now use this in other functions
 
+            # Read clefs and noteheads
             clefs = read_clef_classification(clef_file)
             noteheads = read_notehead_classification(notehead_file)
 
             print(clefs)  # Debugging: check if clefs are read correctly
             print(noteheads)  # Debugging: check if noteheads are read correctly
 
-            assign_clefs_to_bars(noteheads, clefs)
-
-
+            # File paths
             notehead_blobs_path = os.path.join(notehead_folder, 'processed_image_with_dots.png')
             result_path = os.path.join(result_folder, 'bound_box_notehead.png')
-
             beam_lines_path = os.path.join(beam_folder, 'lines.png')
             final_output_path = os.path.join(result_folder, 'notehead_with_yellow_line.png')
-
             bar_lines_path = os.path.join(bar_folder, 'bar_bounding_boxes.png')
             finalz_output_path = os.path.join(result_folder, 'notehead_with_yellow_and_bar_line.png')
 
+            # Bar detection
             if os.path.exists(bar_lines_path):
                 bar_boxes = draw_boundingbox(bar_lines_path, result_path, finalz_output_path)
             else:
                 bar_boxes = None
 
+            # Check notehead attachment
             if os.path.exists(notehead_blobs_path):
                 if bar_boxes:
-                    check_notehead_attached_to_stem(notehead_blobs_path, result_path,bar_boxes, staff_line_rows)
-
+                    check_notehead_attached_to_stem(notehead_blobs_path, result_path, bar_boxes,staff_line_rows)
                 else:
                     print("Skipping notehead processing because no bar bounding boxes were found.")
 
+                # Beam detection
                 if os.path.exists(beam_lines_path):
                     draw_yellow_line_on_beam(beam_lines_path, result_path, final_output_path)
-
                 else:
                     print(f"Error: Beam detection output not found at {beam_lines_path}")
             else:
                 print(f"Error: Notehead blob image not found at {notehead_blobs_path}")
-
-
 
 
 if __name__ == "__main__":

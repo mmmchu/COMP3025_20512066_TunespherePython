@@ -56,8 +56,3 @@ def pdf_to_grayscale_and_binarize(pdfpath, outputfolder, threshold=185):
 
     return binarizedimagepath
 
-
-# Example usage
-pdf_path = 'Image/music1.pdf'
-output_folder = 'processed_images'
-binarized_image_path = pdf_to_grayscale_and_binarize(pdf_path, output_folder)
