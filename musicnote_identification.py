@@ -1,4 +1,3 @@
-
 import os
 import cv2
 import numpy as np
@@ -135,5 +134,68 @@ def draw_bounding_box_on_centernoteheads(notehead_image,output_folder):
     cv2.imwrite(output_path, notehead_image)
     print(f"Image saved with bounding boxes to {output_path}")
 
-    # Return the modified image with bounding boxes drawn
-    return notehead_image
+def identify_crochets_quavers(modified_image, output_folder):
+    hsv_image = cv2.cvtColor(modified_image, cv2.COLOR_BGR2HSV)
+
+    # Define HSV ranges
+    lower_green = np.array([35, 50, 50])
+    upper_green = np.array([85, 255, 255])
+    lower_yellow = np.array([20, 100, 100])
+    upper_yellow = np.array([30, 255, 255])
+
+    # Create masks
+    green_mask = cv2.inRange(hsv_image, lower_green, upper_green)
+    yellow_mask = cv2.inRange(hsv_image, lower_yellow, upper_yellow)
+
+    # Find contours
+    green_contours, _ = cv2.findContours(green_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    yellow_contours, _ = cv2.findContours(yellow_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+    crochets, quavers, crotchet_rests = [], [], []
+
+    for contour in green_contours:
+        x, y, w, h = cv2.boundingRect(contour)
+        center_x, center_y = x + w // 2, y + h // 2
+
+        # Check if near yellow beam (quaver)
+        is_quaver = any(
+            bx - 10 <= center_x <= bx + bw + 10 and
+            (by + bh < center_y <= by + bh + 20 or by - 20 <= center_y <= by)
+            for yellow_contour in yellow_contours
+            for bx, by, bw, bh in [cv2.boundingRect(yellow_contour)]
+        )
+
+        if is_quaver:
+            quavers.append((x, y, w, h))
+            cv2.putText(modified_image, "Q", (x, y - 5), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (128, 0, 128), 2)
+        else:
+            # Convert green pixels to black in the 12x12 region
+            for i in range(y, y + 12):
+                for j in range(x, x + 12):
+                    if 0 <= i < modified_image.shape[0] and 0 <= j < modified_image.shape[1]:
+                        pixel = hsv_image[i, j]
+                        if lower_green[0] <= pixel[0] <= upper_green[0]:  # Check if pixel is green
+                            modified_image[i, j] = [0, 0, 0]  # Convert to black
+
+            # Calculate black pixels within the 12x12 region
+            roi = modified_image[y:y + 12, x:x + 12]
+            gray_roi = cv2.cvtColor(roi, cv2.COLOR_BGR2GRAY)
+            black_pixel_count = np.sum(gray_roi == 0)
+
+            # Classify as crotchet or crotchet rest
+            if black_pixel_count > 50:
+                crotchet_rests.append((x, y, w, h))
+                cv2.putText(modified_image, "CR", (x, y - 5), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), 2)
+            else:
+                crochets.append((x, y, w, h))
+                cv2.putText(modified_image, "C", (x, y - 5), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2)
+
+            print(f"Black pixels in 12x12 box at ({x}, {y}): {black_pixel_count}")
+
+    # Save output
+    os.makedirs(output_folder, exist_ok=True)
+    output_path = os.path.join(output_folder, 'crochets_quavers_identified.png')
+    cv2.imwrite(output_path, modified_image)
+
+    return crochets, quavers, crotchet_rests
+
