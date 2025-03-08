@@ -172,11 +172,11 @@ def draw_detected_dots_on_original(processed_image_path, valid_blobs, output_pat
     # Draw new dots on the original image based on detected blobs
     for cx, cy, area, solidity, contour_completeness in valid_blobs:
         if area < 30:  # Small dots
-            cv2.circle(original_img, (cx, cy), 5, (0, 0, 255), -1)  # Red dot (BGR format)
+            cv2.circle(original_img, (cx, cy), 3, (0, 0, 255), -1)  # Red dot (BGR format)
         elif solidity > 0.5 and contour_completeness > 0.4:  # Valid noteheads
-            cv2.circle(original_img, (cx, cy), 5, (0, 255, 0), -1)  # Green dot (BGR format)
+            cv2.circle(original_img, (cx, cy), 3, (0, 255, 0), -1)  # Green dot (BGR format)
         else:  # Invalid blobs
-            cv2.circle(original_img, (cx, cy), 5, (0, 0, 255), -1)  # Red dot (BGR format)
+            cv2.circle(original_img, (cx, cy), 3, (0, 0, 255), -1)  # Red dot (BGR format)
 
     # Save the updated image with newly drawn dots
     cv2.imwrite(output_path, original_img)
