@@ -199,3 +199,72 @@ def identify_crochets_quavers(modified_image, output_folder):
 
     return crochets, quavers, crotchet_rests
 
+def detect_minims(notehead_image, output_folder):
+    # Convert image to HSV for color detection
+    hsv_image = cv2.cvtColor(notehead_image, cv2.COLOR_BGR2HSV)
+
+    # Define HSV range for red (minim markers)
+    lower_red1 = np.array([0, 120, 70])
+    upper_red1 = np.array([10, 255, 255])
+    lower_red2 = np.array([170, 120, 70])
+    upper_red2 = np.array([180, 255, 255])
+
+    # Create masks for red color
+    mask1 = cv2.inRange(hsv_image, lower_red1, upper_red1)
+    mask2 = cv2.inRange(hsv_image, lower_red2, upper_red2)
+    red_mask = cv2.bitwise_or(mask1, mask2)
+
+    # Convert to grayscale for black dot detection
+    gray_image = cv2.cvtColor(notehead_image, cv2.COLOR_BGR2GRAY)
+
+    # Find contours of red regions
+    contours, _ = cv2.findContours(red_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+    minims = []
+    dotted_minims = []
+
+    for contour in contours:
+        x, y, w, h = cv2.boundingRect(contour)
+
+        # **Step 1: Check if it's a Minim (M)**
+        if 5 <= w <= 12 and 5 <= h <= 12:
+            # Check for dotted minim (DM)
+            dot_x, dot_y, dot_w, dot_h = x + w, y, 12, 12  # Yellow box starts after M box
+            is_dm = False
+
+            if dot_x + dot_w < notehead_image.shape[1]:  # Ensure within image bounds
+                dot_region = gray_image[dot_y:dot_y + dot_h, dot_x:dot_x + dot_w]
+
+                # Threshold to detect black pixels (invert to make black = 255)
+                _, dot_thresh = cv2.threshold(dot_region, 127, 255, cv2.THRESH_BINARY_INV)
+
+                if np.any(dot_thresh > 0):  # If any black pixel is detected, classify as DM
+                    is_dm = True
+                    dotted_minims.append((x, y, w, h))
+
+            # Assign **only one classification**:
+            if is_dm:
+                label = "DM"
+                color = (255, 100, 0)
+                dotted_minims.append((x, y, w, h))
+            else:
+                label = "M"
+                color = (255, 200, 150)  # Light blue for M
+                minims.append((x, y, w, h))
+
+            # Draw bounding box and label
+            cv2.rectangle(notehead_image, (x, y), (x + w, y + h), color, 1)
+            cv2.putText(notehead_image, label, (x, y - 5), cv2.FONT_HERSHEY_SIMPLEX, 0.6, color, 2)
+
+            # Draw yellow box for dotted minim detection
+            if is_dm:
+                cv2.rectangle(notehead_image, (dot_x, dot_y), (dot_x + dot_w, dot_y + dot_h), (0, 255, 255), 1)
+
+    # Save the output image
+    if not os.path.exists(output_folder):
+        os.makedirs(output_folder)
+    output_path = os.path.join(output_folder, "detected_minims.png")
+    cv2.imwrite(output_path, notehead_image)
+    print(f"Minims detected and saved to {output_path}")
+
+    return minims, dotted_minims

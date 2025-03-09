@@ -12,6 +12,7 @@ from musicnote_identification import (
     draw_boundingbox,
     draw_bounding_box_on_centernoteheads,
     identify_crochets_quavers,
+    detect_minims,
 )
 
 def main():
@@ -58,6 +59,7 @@ def main():
             # Identify crochets (green dots) and quavers (green dots with yellow beam lines)
             print("Identifying crochets and quavers...")
             identify_crochets_quavers(modified_image, note_classification_output_folder)
+            detect_minims(modified_image,note_classification_output_folder)
 
 
 if __name__ == "__main__":
