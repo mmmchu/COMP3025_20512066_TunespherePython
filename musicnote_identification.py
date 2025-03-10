@@ -89,7 +89,6 @@ def draw_yellow_line_on_beam(lines_image_path, notehead_image):
     # Return the modified notehead image
     return notehead_image
 
-
 def draw_bounding_box_on_centernoteheads(notehead_image,output_folder):
     # Ensure the output folder exists
     if not os.path.exists(output_folder):
@@ -166,7 +165,6 @@ def identify_crochets_quavers(modified_image, output_folder):
         )
 
         if is_quaver:
-            quavers.append((x, y, w, h))
             cv2.putText(modified_image, "Q", (x, y - 5), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (128, 0, 128), 2)
         else:
             # Convert green pixels to black in the 12x12 region
@@ -184,10 +182,8 @@ def identify_crochets_quavers(modified_image, output_folder):
 
             # Classify as crotchet or crotchet rest
             if black_pixel_count > 50:
-                crotchet_rests.append((x, y, w, h))
                 cv2.putText(modified_image, "CR", (x, y - 5), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), 2)
             else:
-                crochets.append((x, y, w, h))
                 cv2.putText(modified_image, "C", (x, y - 5), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2)
 
             print(f"Black pixels in 12x12 box at ({x}, {y}): {black_pixel_count}")
@@ -246,11 +242,9 @@ def detect_minims(notehead_image, output_folder):
             if is_dm:
                 label = "DM"
                 color = (255, 100, 0)
-                dotted_minims.append((x, y, w, h))
             else:
                 label = "M"
                 color = (255, 200, 150)  # Light blue for M
-                minims.append((x, y, w, h))
 
             # Draw bounding box and label
             cv2.rectangle(notehead_image, (x, y), (x + w, y + h), color, 1)
@@ -268,3 +262,6 @@ def detect_minims(notehead_image, output_folder):
     print(f"Minims detected and saved to {output_path}")
 
     return minims, dotted_minims
+
+
+

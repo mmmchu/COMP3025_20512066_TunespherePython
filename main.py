@@ -13,6 +13,7 @@ from musicnote_identification import (
     draw_bounding_box_on_centernoteheads,
     identify_crochets_quavers,
     detect_minims,
+    save_detected_notes,
 )
 
 def main():
@@ -58,8 +59,11 @@ def main():
 
             # Identify crochets (green dots) and quavers (green dots with yellow beam lines)
             print("Identifying crochets and quavers...")
-            identify_crochets_quavers(modified_image, note_classification_output_folder)
-            detect_minims(modified_image,note_classification_output_folder)
+            crochets, quavers, crotchet_rests = identify_crochets_quavers(modified_image, note_classification_output_folder)
+            minims, dotted_minims = detect_minims(modified_image, note_classification_output_folder)
+            # Save detected notes to a text file
+            save_detected_notes(note_classification_output_folder, crochets, quavers, crotchet_rests, minims,
+                                dotted_minims,staff_line_rows)
 
 
 if __name__ == "__main__":
