@@ -89,50 +89,6 @@ def draw_yellow_line_on_beam(lines_image_path, notehead_image):
     # Return the modified notehead image
     return notehead_image
 
-def draw_bounding_box_on_centernoteheads(notehead_image,output_folder):
-    # Ensure the output folder exists
-    if not os.path.exists(output_folder):
-        os.makedirs(output_folder)
-
-    # Convert the image to HSV color space for better color detection
-    hsv_image = cv2.cvtColor(notehead_image, cv2.COLOR_BGR2HSV)
-
-    # Define color ranges for red and green blobs
-    lower_red = np.array([0, 120, 70])
-    upper_red = np.array([10, 255, 255])
-    lower_green = np.array([35, 50, 50])
-    upper_green = np.array([85, 255, 255])
-
-    # Create masks for red and green blobs
-    red_mask = cv2.inRange(hsv_image, lower_red, upper_red)
-    green_mask = cv2.inRange(hsv_image, lower_green, upper_green)
-
-    # Combine the masks
-    combined_mask = cv2.bitwise_or(red_mask, green_mask)
-
-    # Find contours in the combined mask
-    contours, _ = cv2.findContours(combined_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-
-    # Draw bounding boxes around the detected blobs
-    for contour in contours:
-        # Get the bounding box of the contour
-        x, y, w, h = cv2.boundingRect(contour)
-
-        # Calculate the center of the bounding box
-        center_x = x + w // 2
-        center_y = y + h // 2
-
-        # Draw a 12x12 bounding box centered on the notehead
-        cv2.rectangle(notehead_image,
-                      (center_x - 6, center_y - 6),
-                      (center_x + 6, center_y + 6),
-                      (180, 105, 255), 1)  # Pink color box with thinner lines
-
-    # Save the result image with bounding boxes in the output folder
-    output_path = os.path.join(output_folder, 'bounding_boxes.png')
-    cv2.imwrite(output_path, notehead_image)
-    print(f"Image saved with bounding boxes to {output_path}")
-
 def identify_crochets_quavers(modified_image, output_folder):
     hsv_image = cv2.cvtColor(modified_image, cv2.COLOR_BGR2HSV)
 
@@ -151,10 +107,20 @@ def identify_crochets_quavers(modified_image, output_folder):
     yellow_contours, _ = cv2.findContours(yellow_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
     crochets, quavers, crotchet_rests = [], [], []
+    center_coordinates = []  # List to store center coordinates
+
+    # **Create a grayscale copy for black pixel analysis (does not modify original image)**
+    gray_image = cv2.cvtColor(modified_image, cv2.COLOR_BGR2GRAY)
 
     for contour in green_contours:
         x, y, w, h = cv2.boundingRect(contour)
         center_x, center_y = x + w // 2, y + h // 2
+
+        # **Draw bounding box**
+        cv2.rectangle(modified_image, (x, y), (x + w, y + h), (255, 0, 255), 2)  # Blue box
+
+        # Store center coordinates
+        center_coordinates.append((center_x, center_y))
 
         # Check if near yellow beam (quaver)
         is_quaver = any(
@@ -165,35 +131,32 @@ def identify_crochets_quavers(modified_image, output_folder):
         )
 
         if is_quaver:
-            cv2.putText(modified_image, "Q", (x, y - 5), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (128, 0, 128), 2)
+            cv2.putText(modified_image, "Q", (x, y - 5), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (128, 0, 128), 1)
         else:
-            # Convert green pixels to black in the 12x12 region
-            for i in range(y, y + 12):
-                for j in range(x, x + 12):
-                    if 0 <= i < modified_image.shape[0] and 0 <= j < modified_image.shape[1]:
-                        pixel = hsv_image[i, j]
-                        if lower_green[0] <= pixel[0] <= upper_green[0]:  # Check if pixel is green
-                            modified_image[i, j] = [0, 0, 0]  # Convert to black
-
-            # Calculate black pixels within the 12x12 region
-            roi = modified_image[y:y + 12, x:x + 12]
-            gray_roi = cv2.cvtColor(roi, cv2.COLOR_BGR2GRAY)
-            black_pixel_count = np.sum(gray_roi == 0)
+            # Extract 12x12 region from grayscale copy (so green dots remain in the original image)
+            roi = gray_image[y:y + 12, x:x + 12]
+            black_pixel_count = np.sum(roi == 0)
 
             # Classify as crotchet or crotchet rest
-            if black_pixel_count > 50:
-                cv2.putText(modified_image, "CR", (x, y - 5), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), 2)
+            if black_pixel_count > 18:
+                cv2.putText(modified_image, "CR", (x, y - 5), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 100, 0), 1)
             else:
-                cv2.putText(modified_image, "C", (x, y - 5), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2)
+                cv2.putText(modified_image, "C", (x, y - 5), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 1)
 
             print(f"Black pixels in 12x12 box at ({x}, {y}): {black_pixel_count}")
+
+    # Print center coordinates
+    print("Center coordinates of detected noteheads:")
+    for coord in center_coordinates:
+        print(coord)
 
     # Save output
     os.makedirs(output_folder, exist_ok=True)
     output_path = os.path.join(output_folder, 'crochets_quavers_identified.png')
     cv2.imwrite(output_path, modified_image)
 
-    return crochets, quavers, crotchet_rests
+    return crochets, quavers, crotchet_rests, center_coordinates
+
 
 def detect_minims(notehead_image, output_folder):
     # Convert image to HSV for color detection
@@ -242,13 +205,15 @@ def detect_minims(notehead_image, output_folder):
             if is_dm:
                 label = "DM"
                 color = (255, 100, 0)
+                dotted_minims.append((x, y, w, h))
             else:
                 label = "M"
                 color = (255, 200, 150)  # Light blue for M
+                minims.append((x, y, w, h))
 
             # Draw bounding box and label
             cv2.rectangle(notehead_image, (x, y), (x + w, y + h), color, 1)
-            cv2.putText(notehead_image, label, (x, y - 5), cv2.FONT_HERSHEY_SIMPLEX, 0.6, color, 2)
+            cv2.putText(notehead_image, label, (x, y - 5), cv2.FONT_HERSHEY_SIMPLEX, 0.6, color, 1  )
 
             # Draw yellow box for dotted minim detection
             if is_dm:
@@ -262,6 +227,3 @@ def detect_minims(notehead_image, output_folder):
     print(f"Minims detected and saved to {output_path}")
 
     return minims, dotted_minims
-
-
-

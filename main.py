@@ -10,10 +10,8 @@ from bar_lines_detection import bar_detect
 from musicnote_identification import (
     draw_yellow_line_on_beam,
     draw_boundingbox,
-    draw_bounding_box_on_centernoteheads,
     identify_crochets_quavers,
     detect_minims,
-    save_detected_notes,
 )
 
 def main():
@@ -55,15 +53,11 @@ def main():
                 # Now draw the yellow beam lines on the notehead image based on lines.png
                 modified_image = draw_yellow_line_on_beam('beam_images/lines.png', processed_image)
 
-            draw_bounding_box_on_centernoteheads(modified_image,note_classification_output_folder)
-
             # Identify crochets (green dots) and quavers (green dots with yellow beam lines)
             print("Identifying crochets and quavers...")
-            crochets, quavers, crotchet_rests = identify_crochets_quavers(modified_image, note_classification_output_folder)
+            crochets, quavers, crotchet_rests, center_coordinates = identify_crochets_quavers(modified_image,
+                                                                                              note_classification_output_folder)
             minims, dotted_minims = detect_minims(modified_image, note_classification_output_folder)
-            # Save detected notes to a text file
-            save_detected_notes(note_classification_output_folder, crochets, quavers, crotchet_rests, minims,
-                                dotted_minims,staff_line_rows)
 
 
 if __name__ == "__main__":
