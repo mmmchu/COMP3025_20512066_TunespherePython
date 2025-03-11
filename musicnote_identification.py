@@ -89,38 +89,46 @@ def draw_yellow_line_on_beam(lines_image_path, notehead_image):
     # Return the modified notehead image
     return notehead_image
 
-def identify_crochets_quavers(modified_image, output_folder):
+
+def identify_notes(modified_image, output_folder):
     hsv_image = cv2.cvtColor(modified_image, cv2.COLOR_BGR2HSV)
 
-    # Define HSV ranges
+    # Define HSV ranges for green, yellow, and red
     lower_green = np.array([35, 50, 50])
     upper_green = np.array([85, 255, 255])
     lower_yellow = np.array([20, 100, 100])
     upper_yellow = np.array([30, 255, 255])
+    lower_red1 = np.array([0, 120, 70])
+    upper_red1 = np.array([10, 255, 255])
+    lower_red2 = np.array([170, 120, 70])
+    upper_red2 = np.array([180, 255, 255])
 
-    # Create masks
+    # Create masks for green, yellow, and red
     green_mask = cv2.inRange(hsv_image, lower_green, upper_green)
     yellow_mask = cv2.inRange(hsv_image, lower_yellow, upper_yellow)
+    red_mask1 = cv2.inRange(hsv_image, lower_red1, upper_red1)
+    red_mask2 = cv2.inRange(hsv_image, lower_red2, upper_red2)
+    red_mask = cv2.bitwise_or(red_mask1, red_mask2)
 
-    # Find contours
+    # Find contours for green, yellow, and red regions
     green_contours, _ = cv2.findContours(green_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     yellow_contours, _ = cv2.findContours(yellow_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    red_contours, _ = cv2.findContours(red_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
-    crochets, quavers, crotchet_rests = [], [], []
-    center_coordinates = []  # List to store center coordinates
+    # Initialize lists to store results
+    crochets, quavers, crotchet_rests, minims, dotted_minims = [], [], [], [], []
+    notes = []  # List to store all notes with their details
 
-    # **Create a grayscale copy for black pixel analysis (does not modify original image)**
+    # Create a grayscale copy for black pixel analysis (does not modify original image)
     gray_image = cv2.cvtColor(modified_image, cv2.COLOR_BGR2GRAY)
 
+    # Process green contours (crotchets, quavers, crotchet rests)
     for contour in green_contours:
         x, y, w, h = cv2.boundingRect(contour)
         center_x, center_y = x + w // 2, y + h // 2
 
-        # **Draw bounding box**
+        # Draw bounding box
         cv2.rectangle(modified_image, (x, y), (x + w, y + h), (255, 0, 255), 2)  # Blue box
-
-        # Store center coordinates
-        center_coordinates.append((center_x, center_y))
 
         # Check if near yellow beam (quaver)
         is_quaver = any(
@@ -131,67 +139,41 @@ def identify_crochets_quavers(modified_image, output_folder):
         )
 
         if is_quaver:
+            note_type = "Quaver"
             cv2.putText(modified_image, "Q", (x, y - 5), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (128, 0, 128), 1)
+            quavers.append((x, y, w, h))
         else:
             # Extract 12x12 region from grayscale copy (so green dots remain in the original image)
             roi = gray_image[y:y + 12, x:x + 12]
             black_pixel_count = np.sum(roi == 0)
 
             # Classify as crotchet or crotchet rest
-            if black_pixel_count > 18:
+            if black_pixel_count > 24:
+                note_type = "Crotchet Rest"
                 cv2.putText(modified_image, "CR", (x, y - 5), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 100, 0), 1)
+                crotchet_rests.append((x, y, w, h))
             else:
+                note_type = "Crotchet"
                 cv2.putText(modified_image, "C", (x, y - 5), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 1)
+                crochets.append((x, y, w, h))
 
             print(f"Black pixels in 12x12 box at ({x}, {y}): {black_pixel_count}")
 
-    # Print center coordinates
-    print("Center coordinates of detected noteheads:")
-    for coord in center_coordinates:
-        print(coord)
+        # Add note details to the notes list
+        notes.append((note_type, center_x, center_y))
 
-    # Save output
-    os.makedirs(output_folder, exist_ok=True)
-    output_path = os.path.join(output_folder, 'crochets_quavers_identified.png')
-    cv2.imwrite(output_path, modified_image)
-
-    return crochets, quavers, crotchet_rests, center_coordinates
-
-
-def detect_minims(notehead_image, output_folder):
-    # Convert image to HSV for color detection
-    hsv_image = cv2.cvtColor(notehead_image, cv2.COLOR_BGR2HSV)
-
-    # Define HSV range for red (minim markers)
-    lower_red1 = np.array([0, 120, 70])
-    upper_red1 = np.array([10, 255, 255])
-    lower_red2 = np.array([170, 120, 70])
-    upper_red2 = np.array([180, 255, 255])
-
-    # Create masks for red color
-    mask1 = cv2.inRange(hsv_image, lower_red1, upper_red1)
-    mask2 = cv2.inRange(hsv_image, lower_red2, upper_red2)
-    red_mask = cv2.bitwise_or(mask1, mask2)
-
-    # Convert to grayscale for black dot detection
-    gray_image = cv2.cvtColor(notehead_image, cv2.COLOR_BGR2GRAY)
-
-    # Find contours of red regions
-    contours, _ = cv2.findContours(red_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-
-    minims = []
-    dotted_minims = []
-
-    for contour in contours:
+    # Process red contours (minims and dotted minims)
+    for contour in red_contours:
         x, y, w, h = cv2.boundingRect(contour)
+        center_x, center_y = x + w // 2, y + h // 2
 
-        # **Step 1: Check if it's a Minim (M)**
+        # Check if it's a Minim (M)
         if 5 <= w <= 12 and 5 <= h <= 12:
             # Check for dotted minim (DM)
             dot_x, dot_y, dot_w, dot_h = x + w, y, 12, 12  # Yellow box starts after M box
             is_dm = False
 
-            if dot_x + dot_w < notehead_image.shape[1]:  # Ensure within image bounds
+            if dot_x + dot_w < modified_image.shape[1]:  # Ensure within image bounds
                 dot_region = gray_image[dot_y:dot_y + dot_h, dot_x:dot_x + dot_w]
 
                 # Threshold to detect black pixels (invert to make black = 255)
@@ -201,29 +183,69 @@ def detect_minims(notehead_image, output_folder):
                     is_dm = True
                     dotted_minims.append((x, y, w, h))
 
-            # Assign **only one classification**:
+            # Assign only one classification
             if is_dm:
+                note_type = "Dotted Minim"
                 label = "DM"
                 color = (255, 100, 0)
                 dotted_minims.append((x, y, w, h))
             else:
+                note_type = "Minim"
                 label = "M"
                 color = (255, 200, 150)  # Light blue for M
                 minims.append((x, y, w, h))
 
             # Draw bounding box and label
-            cv2.rectangle(notehead_image, (x, y), (x + w, y + h), color, 1)
-            cv2.putText(notehead_image, label, (x, y - 5), cv2.FONT_HERSHEY_SIMPLEX, 0.6, color, 1  )
+            cv2.rectangle(modified_image, (x, y), (x + w, y + h), color, 1)
+            cv2.putText(modified_image, label, (x, y - 5), cv2.FONT_HERSHEY_SIMPLEX, 0.6, color, 1)
 
             # Draw yellow box for dotted minim detection
             if is_dm:
-                cv2.rectangle(notehead_image, (dot_x, dot_y), (dot_x + dot_w, dot_y + dot_h), (0, 255, 255), 1)
+                cv2.rectangle(modified_image, (dot_x, dot_y), (dot_x + dot_w, dot_y + dot_h), (0, 255, 255), 1)
 
-    # Save the output image
-    if not os.path.exists(output_folder):
-        os.makedirs(output_folder)
-    output_path = os.path.join(output_folder, "detected_minims.png")
-    cv2.imwrite(output_path, notehead_image)
-    print(f"Minims detected and saved to {output_path}")
+            # Add note details to the notes list
+            notes.append((note_type, center_x, center_y))
 
-    return minims, dotted_minims
+    # Sort notes by Y-coordinate (to group by bars)
+    notes.sort(key=lambda note: note[2])  # Sort by center_y (vertical position)
+
+    # Group notes into bars based on vertical proximity
+    bars = []
+    current_bar = [notes[0]] if notes else []  # Start with the first note
+
+    for i in range(1, len(notes)):
+        if abs(notes[i][2] - notes[i - 1][2]) > 30:  # If y-difference > 30, start a new bar
+            bars.append(current_bar)
+            current_bar = [notes[i]]
+        else:
+            current_bar.append(notes[i])
+
+    if current_bar:
+        bars.append(current_bar)  # Append the last group
+
+    # Sort each bar by X-coordinate (left to right order)
+    for bar in bars:
+        bar.sort(key=lambda note: note[1])  # Sort by center_x
+
+    # Save sorted results to results.txt with bar information
+    results_file_path = os.path.join(output_folder, 'results.txt')
+    with open(results_file_path, 'w') as results_file:
+        results_file.write("Bar, Note Type, CX, CY\n")  # Write header
+
+        for bar_index, bar in enumerate(bars, start=1):
+            for note in bar:
+                results_file.write(f"{bar_index}, {note[0]}, {note[1]}, {note[2]}\n")
+
+    # Print sorted notes in playing order
+    print("Sorted notes in playing order (by bar and x-axis):")
+    for bar_index, bar in enumerate(bars, start=1):
+        print(f"\nBar {bar_index}:")
+        for note in bar:
+            print(f"  Note Type: {note[0]}, Center: ({note[1]}, {note[2]})")
+
+    # Save output image
+    os.makedirs(output_folder, exist_ok=True)
+    output_path = os.path.join(output_folder, 'identified_notes.png')
+    cv2.imwrite(output_path, modified_image)
+
+    return crochets, quavers, crotchet_rests, minims, dotted_minims, notes
