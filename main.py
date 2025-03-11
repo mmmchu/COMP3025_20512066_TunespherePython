@@ -11,9 +11,8 @@ from musicnote_identification import (
     draw_yellow_line_on_beam,
     draw_boundingbox,
     identify_notes,
-
 )
-
+from pitch_identification import read_results_file_and_create_folder,process_notes_with_staffs
 def main():
     # Paths
     pdf_path = 'Image/music1.pdf'
@@ -22,6 +21,7 @@ def main():
     bar_folder = 'bar_line_images'
     note_classification_output_folder = 'note_identification'
     process_image_path = "processed_images/music1_pg_1_BN_cropped_with_staff.png"
+    pitch_output_folder = "pitch_identification"  # Folder to store pitch analysis
 
 
     # Convert PDF to grayscale & binarized images
@@ -55,7 +55,13 @@ def main():
 
             # Identify crochets (green dots) and quavers (green dots with yellow beam lines)
             print("Identifying crochets and quavers...")
-            crochets, quavers, crotchet_rests, minims, dotted_minims, notes = identify_notes(modified_image, note_classification_output_folder)
+            identify_notes(modified_image, note_classification_output_folder)
+
+            # Read the results file and get the notes data and total number of bars
+            notes_data, num_bars = read_results_file_and_create_folder('note_identification/results.txt', pitch_output_folder)
+
+            # Process the notes with the staff lines
+            process_notes_with_staffs(notes_data, staff_line_rows, num_bars)
 
 
 
