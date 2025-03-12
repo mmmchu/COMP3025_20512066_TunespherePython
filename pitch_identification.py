@@ -36,20 +36,25 @@ def read_results_file_and_create_folder(file_path, output_folder):
 
     return notes_data, max_bar
 
+def assign_note_duration(note_type):
+    """
+    Assigns a duration (in beats) based on the note type.
+    """
+    duration_mapping = {
+        "crotchet": 1,
+        "minim": 2,
+        "crotchet rest": 1,
+        "dotted minim": 3,
+        "quaver": 0.5
+    }
+    return duration_mapping.get(note_type.lower(), 0)  # Default to 0 if note type is unknown
 
 def process_notes_with_staffs(notes_data, staff_lines, num_bars, output_file="processed_notes.txt"):
     """
     Processes notes to compute the CY differences relative to the staff lines.
-    Notes that are exactly on a line (0 difference) or 1 unit away are identified.
+    Assigns a duration based on the note type.
     """
-
-    # ✅ Group staff lines into sets of 5 (one set per bar)
     grouped_staffs = [staff_lines[i:i + 5] for i in range(0, len(staff_lines), 5)]
-
-    # ✅ Check that each bar has exactly 5 staff lines
-    print("Grouped Staff Lines (each sublist should have 5 values):")
-    for i, staff in enumerate(grouped_staffs):
-        print(f"Bar {i + 1}: {staff}")
 
     processed_notes = []
 
@@ -58,36 +63,62 @@ def process_notes_with_staffs(notes_data, staff_lines, num_bars, output_file="pr
             print(f"Skipping malformed note entry: {note}")
             continue
 
-        # ✅ Extract values
         bar_number, note_type, note_x, note_y = note
 
-        # ✅ Ensure the bar number is valid
         if bar_number <= 0 or bar_number > num_bars:
             print(f"Skipping note with invalid bar number: {note}")
             continue
 
-        # ✅ Get the corresponding staff lines for this bar
-        staff_y_values = grouped_staffs[bar_number - 1]  # Bar 1 → index 0
-
-        # ✅ Compute CY differences with each of the 5 staff lines
+        staff_y_values = grouped_staffs[bar_number - 1]
         cy_differences = [note_y - staff_y for staff_y in staff_y_values]
 
-        # ✅ Identify which staff line the note is on or near
-        note_position = None  # Default: not exactly on a line
+        note_position = None
+
+        # First loop: Check if note is exactly on a line
         for i, diff in enumerate(cy_differences):
             if diff == 0:
-                note_position = f"On Line {i + 1}"  # Exact line match
-                break  # Stop checking once we find an exact match
+                note_position = f"On Line {i + 1}"
+                break
             elif abs(diff) == 1:
-                note_position = f"Near Line {i + 1}"  # Just above or below
+                note_position = f"On Line {i + 1}"
 
-        # ✅ Store in the results list
-        processed_notes.append((bar_number, note_type, note_x, note_y, cy_differences, note_position))
+        # Second check: Find two closest values to zero
+        if note_position is None:  # Only check if not already assigned a line position
+            sorted_diffs = sorted(enumerate(cy_differences), key=lambda x: abs(x[1]))
 
-    # ✅ Save results to a file
+            # Get the two closest differences to zero
+            closest_idx, closest_diff = sorted_diffs[0]  # Closest to 0
+            second_closest_idx, second_closest_diff = sorted_diffs[1]  # Second closest to 0
+
+            # Correct absolute difference calculation
+            diff_value = abs(abs(closest_diff) - abs(second_closest_diff))
+
+            # Print for debugging
+            print(f"Closest to 0: {closest_diff} (Index {closest_idx + 1}), "
+                  f"Second Closest: {second_closest_diff} (Index {second_closest_idx + 1}), "
+                  f"Corrected Absolute Difference: {diff_value}")
+
+            # Check if they are adjacent staff lines (same absolute value or differ by 1)
+            if diff_value <= 1:
+                note_position = f"Between Line {closest_idx + 1} and Line {second_closest_idx + 1}"
+
+                # New check: If difference is > 6 and closest index is 5th (Index 4 in zero-based)
+            if diff_value > 5 and closest_diff == cy_differences[4]:  # 5th staff line value
+                note_position = "Below the Fifth Staff Line"
+
+            # New check: If difference is exactly 2, it's likely on the line of the smallest value
+            elif diff_value == 2:
+                closest_idx = cy_differences.index(closest_diff)
+                note_position = f"ON LINE {closest_idx + 1}"
+
+        duration = assign_note_duration(note_type)
+
+        processed_notes.append((bar_number, note_type, note_x, note_y, cy_differences, note_position, duration))
+
     with open(output_file, "w") as f:
-        for bar, note_type, cx, cy, differences, position in processed_notes:
+        for bar, note_type, cx, cy, differences, position, duration in processed_notes:
             position_text = f", {position}" if position else ""
-            f.write(f"Bar {bar}, {note_type}, CX {cx}, CY {cy}, Differences: {differences}{position_text}\n")
+            f.write(f"Bar {bar}, {note_type}, CX {cx}, CY {cy}, Differences: {differences}{position_text}, Duration: {duration} beats\n")
 
     print(f"Processed {len(processed_notes)} notes and saved results to {output_file}")
+
