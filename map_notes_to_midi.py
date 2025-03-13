@@ -30,7 +30,7 @@ def get_midi_number(note_position, clef):
             "On Line 2": "D5", "Between Line 2 and Line 3": "C5",
             "On Line 3": "B4", "Between Line 3 and Line 4": "A4",
             "On Line 4": "G4", "Between Line 4 and Line 5": "F#4",
-            "On Line 5": "E4", "Below Line 5": "D4"
+            "On Line 5": "E4", "Below Line 5": "D4","Below Line": "C4",
         }
         note = position_map.get(note_position, "C4")
         return NOTE_TO_MIDI_TREBLE.get(note, 60)
@@ -156,23 +156,51 @@ def assign_clef_to_notes(note_data, clef_data):
     return assigned_notes
 
 
-def create_midi_file(assigned_notes, output_file="output.mid", ticks_per_beat=480):
-    mid = MidiFile()
+def create_midi_file(notes, file_name, ticks_per_beat=480):
+    from mido import Message, MidiFile, MidiTrack
+
+    midi = MidiFile(ticks_per_beat=ticks_per_beat)
     track = MidiTrack()
-    mid.tracks.append(track)
+    midi.tracks.append(track)
 
-    # Set tempo (optional)
-    track.append(mido.MetaMessage('set_tempo', tempo=mido.bpm2tempo(120)))
+    for midi_note, duration in notes:
+        tick_duration = int(duration * ticks_per_beat)  # Convert duration to int
 
-    for bar_info, note_type, position_text, duration, clef_for_bar, midi_number in assigned_notes:
-        # Convert duration to ticks
-        ticks = int(duration * ticks_per_beat)
+        track.append(Message('note_on', note=midi_note, velocity=64, time=0))
+        track.append(Message('note_off', note=midi_note, velocity=64, time=tick_duration))
 
-        # Add note_on and note_off messages
-        track.append(Message('note_on', note=midi_number, velocity=64, time=0))
-        track.append(Message('note_off', note=midi_number, velocity=64, time=ticks))
+    midi.save(file_name)
+    print(f"MIDI file saved: {file_name}")
 
-    # Save the MIDI file
-    mid.save(output_file)
-    print(f"MIDI file saved as {output_file}")
+
+
+def merge_midi_files(treble_file, bass_file, output_file):
+    midi_combined = MidiFile()
+    treble_midi = MidiFile(treble_file)
+    bass_midi = MidiFile(bass_file)
+
+    midi_combined.tracks.append(treble_midi.tracks[0])  # Add treble track
+    midi_combined.tracks.append(bass_midi.tracks[0])  # Add bass track
+
+    midi_combined.save(output_file)
+
+
+def create_piano_midi(assigned_notes, treble_file='treble.mid', bass_file='bass.mid', output_file='piano_combined.mid'):
+    treble_notes = []
+    bass_notes = []
+
+    for note_data in assigned_notes:
+        # Unpack the tuple correctly
+        bar, note_type, position, duration, clef, midi_note = note_data
+
+        if clef == "treble":
+            treble_notes.append((midi_note, duration))
+        elif clef == "bass":
+            bass_notes.append((midi_note, duration))
+
+    create_midi_file(treble_notes, treble_file)
+    create_midi_file(bass_notes, bass_file)
+
+    merge_midi_files(treble_file, bass_file, output_file)
+    print("Piano MIDI file created successfully!")
 

@@ -13,7 +13,8 @@ from musicnote_identification import (
     identify_notes,
 )
 from pitch_identification import read_results_file_and_create_folder, process_notes_with_staffs
-from map_notes_to_midi import parse_notes,parse_clef_classification,assign_clef_to_notes,create_midi_file
+from map_notes_to_midi import parse_notes, parse_clef_classification, assign_clef_to_notes, create_piano_midi
+
 
 def main():
     # Paths
@@ -64,11 +65,13 @@ def main():
 
             # Process the notes with the staff lines
             process_notes_with_staffs(notes_data, staff_line_rows, num_bars)
+            # Process MIDI file creation
             notes = parse_notes('processed_notes.txt')
             clefs = parse_clef_classification('clef_images/clef_classification.txt')
-            assigned_notes = assign_clef_to_notes(notes,clefs)
-            create_midi_file(assigned_notes,'output.midi')
+            assigned_notes = assign_clef_to_notes(notes, clefs)
 
+            # Generate separate MIDI files for treble and bass and combine them into a piano MIDI file
+            create_piano_midi(assigned_notes)
 
 if __name__ == "__main__":
     main()

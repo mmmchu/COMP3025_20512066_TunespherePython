@@ -15,7 +15,7 @@
  1, Crotchet, CX 467, CY 43, Differences: [28, 22, 15, 9, 3], Position: Below Line 5, Duration: 1 beats
  1, Crotchet, CX 497, CY 43, Differences: [28, 22, 15, 9, 3], Position: Below Line 5, Duration: 1 beats
  2, Crotchet Rest, CX 66, CY 92, Differences: [12, 6, 0, -6, -12], Position: On Line 3, Duration: 1 beats
- 2, Dotted Minim, CX 105, CY 102, Differences: [22, 16, 10, 4, -2], Position: On Line 5, Duration: 3 beats
+ 2, Dotted Minim, CX 105, CY 102, Differences: [22, 16, 10, 4, -2], Position: Between Line 4 and Line 5, Duration: 3 beats
  2, Dotted Minim, CX 216, CY 96, Differences: [16, 10, 4, -2, -8], Position: On Line 4, Duration: 3 beats
  2, Dotted Minim, CX 316, CY 96, Differences: [16, 10, 4, -2, -8], Position: On Line 4, Duration: 3 beats
  2, Dotted Minim, CX 437, CY 90, Differences: [10, 4, -2, -8, -14], Position: On Line 3, Duration: 3 beats
@@ -25,7 +25,7 @@
  3, Quaver, CX 142, CY 180, Differences: [18, 12, 6, 0, -6], Position: On Line 4, Duration: 0.5 beats
  3, Quaver, CX 167, CY 183, Differences: [21, 15, 9, 3, -3], Position: Between Line 4 and Line 5, Duration: 0.5 beats
  3, Crotchet, CX 202, CY 187, Differences: [25, 19, 13, 7, 1], Position: On Line 5, Duration: 1 beats
- 3, Crotchet, CX 237, CY 193, Differences: [31, 25, 19, 13, 7], Position: Below Line 5, Duration: 1 beats
+ 3, Crotchet, CX 237, CY 193, Differences: [31, 25, 19, 13, 7], Position: Below Line, Duration: 1 beats
  3, Crotchet, CX 272, CY 187, Differences: [25, 19, 13, 7, 1], Position: On Line 5, Duration: 1 beats
  3, Crotchet, CX 316, CY 190, Differences: [28, 22, 16, 10, 4], Position: Below Line 5, Duration: 1 beats
  3, Crotchet, CX 352, CY 180, Differences: [18, 12, 6, 0, -6], Position: On Line 4, Duration: 1 beats
@@ -60,13 +60,13 @@
  7, Quaver, CX 89, CY 467, Differences: [13, 7, 1, -5, -11], Position: On Line 3, Duration: 0.5 beats
  7, Quaver, CX 114, CY 469, Differences: [15, 9, 3, -3, -9], Position: Between Line 3 and Line 4, Duration: 0.5 beats
  7, Quaver, CX 139, CY 473, Differences: [19, 13, 7, 1, -5], Position: On Line 4, Duration: 0.5 beats
- 7, Quaver, CX 163, CY 476, Differences: [22, 16, 10, 4, -2], Position: On Line 5, Duration: 0.5 beats
+ 7, Quaver, CX 163, CY 476, Differences: [22, 16, 10, 4, -2], Position: Between Line 4 and Line 5, Duration: 0.5 beats
  7, Crotchet, CX 197, CY 479, Differences: [25, 19, 13, 7, 1], Position: On Line 5, Duration: 1 beats
- 7, Crotchet, CX 231, CY 485, Differences: [31, 25, 19, 13, 7], Position: Below Line 5, Duration: 1 beats
+ 7, Crotchet, CX 231, CY 485, Differences: [31, 25, 19, 13, 7], Position: Below Line, Duration: 1 beats
  7, Crotchet, CX 265, CY 479, Differences: [25, 19, 13, 7, 1], Position: On Line 5, Duration: 1 beats
  7, Crotchet, CX 308, CY 482, Differences: [28, 22, 16, 10, 4], Position: Below Line 5, Duration: 1 beats
  7, Crotchet, CX 342, CY 473, Differences: [19, 13, 7, 1, -5], Position: On Line 4, Duration: 1 beats
- 7, Crotchet, CX 376, CY 476, Differences: [22, 16, 10, 4, -2], Position: On Line 5, Duration: 1 beats
+ 7, Crotchet, CX 376, CY 476, Differences: [22, 16, 10, 4, -2], Position: Between Line 4 and Line 5, Duration: 1 beats
  7, Minim, CX 421, CY 472, Differences: [18, 12, 6, 0, -6], Position: On Line 4, Duration: 2 beats
  7, Quaver, CX 477, CY 467, Differences: [13, 7, 1, -5, -11], Position: On Line 3, Duration: 0.5 beats
  7, Quaver, CX 502, CY 463, Differences: [9, 3, -3, -9, -15], Position: Between Line 2 and Line 3, Duration: 0.5 beats
@@ -74,4 +74,4 @@
  8, Dotted Minim, CX 197, CY 534, Differences: [16, 10, 4, -3, -9], Position: Between Line 4 and Line 3, Duration: 3 beats
  8, Minim, CX 309, CY 531, Differences: [13, 7, 1, -6, -12], Position: On Line 3, Duration: 2 beats
  8, Crotchet, CX 376, CY 539, Differences: [21, 15, 9, 2, -4], Position: On Line 4, Duration: 1 beats
- 8, Dotted Minim, CX 421, CY 541, Differences: [23, 17, 11, 4, -2], Position: On Line 5, Duration: 3 beats
+ 8, Dotted Minim, CX 421, CY 541, Differences: [23, 17, 11, 4, -2], Position: Between Line 4 and Line 5, Duration: 3 beats
