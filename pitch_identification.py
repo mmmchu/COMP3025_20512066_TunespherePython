@@ -1,20 +1,10 @@
 import os
 
-def read_results_file_and_create_folder(file_path, output_folder):
+def read_results_file_and_create_folder(file_path):
     """
     Reads the results.txt file and creates a new folder called 'pitch_identification'.
     Returns a list of tuples containing (bar_number, note_type, cx, cy) and the total number of bars.
     """
-    # Create the pitch_identification folder if it doesn't exist
-    if not os.path.exists(output_folder):
-        os.makedirs(output_folder)
-        print(f"Created folder: {output_folder}")
-
-    # Check if results.txt exists
-    if not os.path.exists(file_path):
-        print(f"Error: {file_path} not found!")
-        return [], 0
-
     notes_data = []
     max_bar = 0  # Track the maximum bar number to determine the total number of bars
 

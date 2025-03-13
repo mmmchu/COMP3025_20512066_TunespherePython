@@ -14,16 +14,16 @@ from musicnote_identification import (
 )
 from pitch_identification import read_results_file_and_create_folder, process_notes_with_staffs
 from map_notes_to_midi import parse_notes, parse_clef_classification, assign_clef_to_notes, create_piano_midi
+import argparse
 
-
-def main():
+def main(pdf_filename):
     # Paths
-    pdf_path = 'Image/music1.pdf'
+    pdf_path = f'Image/{pdf_filename}.pdf'
     output_folder = 'processed_images'
     notehead_folder = 'notehead_images'
     bar_folder = 'bar_line_images'
     note_classification_output_folder = 'note_identification'
-    process_image_path = "processed_images/music1_pg_1_BN_cropped_with_staff.png"
+    process_image_path = f"processed_images/{pdf_filename}_pg_1_BN_cropped_with_staff.png"
     pitch_output_folder = "pitch_identification"  # Folder to store pitch analysis
 
     # Convert PDF to grayscale & binarized images
@@ -60,8 +60,7 @@ def main():
             identify_notes(modified_image, note_classification_output_folder)
 
             # Read the results file and get the notes data and total number of bars
-            notes_data, num_bars = read_results_file_and_create_folder('note_identification/results.txt',
-                                                                       pitch_output_folder)
+            notes_data, num_bars = read_results_file_and_create_folder('note_identification/results.txt')
 
             # Process the notes with the staff lines
             process_notes_with_staffs(notes_data, staff_line_rows, num_bars)
@@ -74,4 +73,8 @@ def main():
             create_piano_midi(assigned_notes)
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser(description="Process a music PDF file.")
+    parser.add_argument('filename', type=str, help="The name of the music PDF file (without extension)")
+    args = parser.parse_args()
+
+    main(args.filename)
