@@ -123,8 +123,8 @@ def crop_clef(processed_image_path):
     # Save clef classification to a text file
     classification_txt_path = os.path.join(output_folder, "clef_classification.txt")
     with open(classification_txt_path, "w") as file:
-        for cx, cy, clef_type in clef_labels:
-            file.write(f"{clef_type},{cx}, {cy}\n")
+        for idx, (cx, cy, clef_type) in enumerate(clef_labels, start=1):
+            file.write(f"{idx},{clef_type},{cx},{cy}\n")
 
     print(f"Clef classification saved at: {classification_txt_path}")
 

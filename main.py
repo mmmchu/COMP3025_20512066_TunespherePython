@@ -12,7 +12,9 @@ from musicnote_identification import (
     draw_boundingbox,
     identify_notes,
 )
-from pitch_identification import read_results_file_and_create_folder,process_notes_with_staffs
+from pitch_identification import read_results_file_and_create_folder, process_notes_with_staffs
+from map_notes_to_midi import parse_notes,parse_clef_classification,assign_clef_to_notes,create_midi_file
+
 def main():
     # Paths
     pdf_path = 'Image/music1.pdf'
@@ -22,7 +24,6 @@ def main():
     note_classification_output_folder = 'note_identification'
     process_image_path = "processed_images/music1_pg_1_BN_cropped_with_staff.png"
     pitch_output_folder = "pitch_identification"  # Folder to store pitch analysis
-
 
     # Convert PDF to grayscale & binarized images
     binarized_image_path = pdf_to_grayscale_and_binarize(pdf_path, output_folder)
@@ -58,11 +59,15 @@ def main():
             identify_notes(modified_image, note_classification_output_folder)
 
             # Read the results file and get the notes data and total number of bars
-            notes_data, num_bars = read_results_file_and_create_folder('note_identification/results.txt', pitch_output_folder)
+            notes_data, num_bars = read_results_file_and_create_folder('note_identification/results.txt',
+                                                                       pitch_output_folder)
 
             # Process the notes with the staff lines
             process_notes_with_staffs(notes_data, staff_line_rows, num_bars)
-
+            notes = parse_notes('processed_notes.txt')
+            clefs = parse_clef_classification('clef_images/clef_classification.txt')
+            assigned_notes = assign_clef_to_notes(notes,clefs)
+            create_midi_file(assigned_notes,'output.midi')
 
 
 if __name__ == "__main__":

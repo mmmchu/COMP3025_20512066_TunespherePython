@@ -83,12 +83,12 @@ def process_notes_with_staffs(notes_data, staff_lines, num_bars, output_file="pr
                 note_position = f"On Line {i + 1}"
 
         # Second check: Find two closest values to zero
-        if note_position is None:  # Only check if not already assigned a line position
+        if note_position is None:
             sorted_diffs = sorted(enumerate(cy_differences), key=lambda x: abs(x[1]))
 
             # Get the two closest differences to zero
-            closest_idx, closest_diff = sorted_diffs[0]  # Closest to 0
-            second_closest_idx, second_closest_diff = sorted_diffs[1]  # Second closest to 0
+            closest_idx, closest_diff = sorted_diffs[0]
+            second_closest_idx, second_closest_diff = sorted_diffs[1]
 
             # Correct absolute difference calculation
             diff_value = abs(abs(closest_diff) - abs(second_closest_diff))
@@ -98,18 +98,17 @@ def process_notes_with_staffs(notes_data, staff_lines, num_bars, output_file="pr
                   f"Second Closest: {second_closest_diff} (Index {second_closest_idx + 1}), "
                   f"Corrected Absolute Difference: {diff_value}")
 
-            # Check if they are adjacent staff lines (same absolute value or differ by 1)
+            # Check if they are adjacent staff lines
             if diff_value <= 1:
                 note_position = f"Between Line {closest_idx + 1} and Line {second_closest_idx + 1}"
-
-                # New check: If difference is > 6 and closest index is 5th (Index 4 in zero-based)
-            if diff_value > 5 and closest_diff == cy_differences[4]:  # 5th staff line value
-                note_position = "Below the Fifth Staff Line"
-
-            # New check: If difference is exactly 2, it's likely on the line of the smallest value
+            elif diff_value > 5 and closest_diff == cy_differences[4]:
+                note_position = "Below Line 5"
             elif diff_value == 2:
                 closest_idx = cy_differences.index(closest_diff)
-                note_position = f"ON LINE {closest_idx + 1}"
+                note_position = f"On Line {closest_idx + 1}"
+
+        # Ensure position is always assigned
+        position_text = f", Position: {note_position}" if note_position is not None else ", Position: Unknown"
 
         duration = assign_note_duration(note_type)
 
@@ -117,8 +116,8 @@ def process_notes_with_staffs(notes_data, staff_lines, num_bars, output_file="pr
 
     with open(output_file, "w") as f:
         for bar, note_type, cx, cy, differences, position, duration in processed_notes:
-            position_text = f", {position}" if position else ""
-            f.write(f"Bar {bar}, {note_type}, CX {cx}, CY {cy}, Differences: {differences}{position_text}, Duration: {duration} beats\n")
+            position_text = f", Position: {position}" if position is not None else ", Position: Unknown"
+            f.write(f" {bar}, {note_type}, CX {cx}, CY {cy}, Differences: {differences}{position_text}, Duration: {duration} beats\n")
 
     print(f"Processed {len(processed_notes)} notes and saved results to {output_file}")
 
