@@ -141,7 +141,7 @@ def identify_notes(modified_image, output_folder):
             black_pixel_count = np.sum(roi == 0)
 
             # Classify as crotchet or crotchet rest
-            if black_pixel_count > 24:
+            if black_pixel_count > 19:
                 note_type = "Crotchet Rest"
                 cv2.putText(modified_image, "CR", (x, y - 5), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 100, 0), 1)
                 crotchet_rests.append((x, y, w, h))
