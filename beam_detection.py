@@ -63,6 +63,9 @@ def beam_image_processing(image_array, output_folder):
     # Apply Hough Line Transform
     lines = cv2.HoughLinesP(edges, 1, np.pi / 180, threshold=30, minLineLength=8, maxLineGap=5)
 
+    # Get the height of the image
+    image_height = gray_image.shape[0]
+
     # Create a black image to draw lines on
     line_image = np.zeros_like(gray_image)
 
@@ -70,6 +73,12 @@ def beam_image_processing(image_array, output_folder):
         for line in lines:
             x1, y1, x2, y2 = line[0]
             angle = np.arctan2(y2 - y1, x2 - x1) * 180 / np.pi
+
+            # Skip drawing if the line starts or ends within the first 50 pixels from the left
+            # OR within 10 pixels from the bottom
+            if x1 < 50 or x2 < 50 or y1 > (image_height - 10) or y2 > (image_height - 10):
+                continue
+
             if 0 <= abs(angle) <= 45:
                 cv2.line(line_image, (x1, y1), (x2, y2), (255, 255, 255), 10)
 
