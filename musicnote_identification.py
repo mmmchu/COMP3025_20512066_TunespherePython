@@ -55,39 +55,32 @@ def draw_boundingbox(barboundbox_image_path, notehead_image_path):
     # Return the processed notehead image and the yellow boxes
     return notehead_image, yellow_boxes
 
-
 def draw_yellow_line_on_beam(lines_image_path, notehead_image):
-    # Create the 'note_identification' folder if it doesn't exist
     output_folder = 'note_identification'
-    if not os.path.exists(output_folder):
-        os.makedirs(output_folder)
+    os.makedirs(output_folder, exist_ok=True)  # Ensure folder exists
 
     # Load the detected beam lines image (grayscale)
     lines_img = cv2.imread(lines_image_path, cv2.IMREAD_GRAYSCALE)
     if lines_img is None:
         print(f"Error: Could not load {lines_image_path}")
-        return None
+        return notehead_image  # Return unmodified notehead image
 
     # Check for white pixels (beam lines) in lines.png
-    y_positions, x_positions = np.where(lines_img > 200)  # Find white pixels
+    y_positions, x_positions = np.where(lines_img > 200)
 
     if len(y_positions) == 0:
         print("No beam lines detected in lines.png.")
-        return None
+        return notehead_image  # Return unmodified image
 
-    # Draw yellow lines on the detected beam pixels
+    # Draw yellow lines on detected beam pixels
     for y, x in zip(y_positions, x_positions):
         notehead_image[y, x] = (0, 255, 255)  # Yellow color in BGR
 
-    # Define the output path for saving the image
     output_path = os.path.join(output_folder, 'yellow_line_beam.png')
-
-    # Save the modified notehead image with the yellow lines
     cv2.imwrite(output_path, notehead_image)
     print(f"Image saved with yellow lines to {output_path}")
 
-    # Return the modified notehead image
-    return notehead_image
+    return notehead_image  # Always return an image
 
 
 def identify_notes(modified_image, output_folder):
