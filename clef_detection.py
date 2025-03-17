@@ -15,9 +15,9 @@ def crop_clef(processed_image_path):
         return None
 
     # Crop from the left to a width of 35 pixels
-    width = 35
+    width = 32
     height = processed_img_array.shape[0]
-    cropped_img_array = processed_img_array[:, 13:width]
+    cropped_img_array = processed_img_array[:, 12:width]
 
     # Create the output folder if it doesn't exist
     output_folder = 'clef_images'
@@ -34,21 +34,21 @@ def crop_clef(processed_image_path):
     cropped_img_cv = cropped_img_array.astype(np.uint8)
 
     # 1. Apply median blur
-    median_blur_img = cv2.medianBlur(cropped_img_cv, 7)
+    median_blur_img = cv2.medianBlur(cropped_img_cv, 3)
     median_blur_path = os.path.join(output_folder, "median_blur.png")
     cv2.imwrite(median_blur_path, median_blur_img)
     print(f"Median blur image saved at: {median_blur_path}")
 
     # 2. Apply Gaussian adaptive thresholding
     gauss_thresh_img = cv2.adaptiveThreshold(
-        median_blur_img, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
-        cv2.THRESH_BINARY_INV, 9, 9)
+        median_blur_img, 240, cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
+        cv2.THRESH_BINARY_INV, 9, 3)
     gauss_thresh_path = os.path.join(output_folder, "gaussian_threshold.png")
     cv2.imwrite(gauss_thresh_path, gauss_thresh_img)
     print(f"Gaussian threshold image saved at: {gauss_thresh_path}")
 
     # 3. Apply dilation
-    kernel = np.ones((4, 4), np.uint8)  # Adjusted kernel size for better dilation
+    kernel = np.ones((2, 2), np.uint8)  # Adjusted kernel size for better dilation
     dilated_img = cv2.dilate(gauss_thresh_img, kernel, iterations=1)
     dilation_path = os.path.join(output_folder, "dilated.png")
     cv2.imwrite(dilation_path, dilated_img)
@@ -61,7 +61,7 @@ def crop_clef(processed_image_path):
     contours, _ = cv2.findContours(dilated_img, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
     # Define a threshold for circularity to consider a contour as circular
-    circularity_threshold = 0.8
+    circularity_threshold = 0.7
 
     # List to store blob information
     blob_info = []
