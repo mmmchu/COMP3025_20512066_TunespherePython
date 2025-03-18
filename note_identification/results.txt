@@ -1,17 +1,78 @@
 Bar, Note Type, CX, CY
-1, Crotchet, 50, 17
-1, Crotchet, 85, 25
-1, Crotchet, 120, 25
-1, Crotchet, 165, 17
-1, Crotchet, 199, 25
-1, Crotchet, 234, 25
-1, Crotchet, 285, 17
-1, Crotchet, 320, 25
-1, Crotchet, 354, 25
-1, Crotchet, 402, 17
-1, Crotchet, 437, 25
-1, Crotchet, 471, 25
-2, rests, 94, 68
-2, rests, 209, 68
-2, rests, 326, 68
-2, rests, 445, 68
+1, Crotchet, 67, 43
+1, Crotchet, 106, 33
+1, Crotchet, 135, 28
+1, Quaver, 164, 22
+1, Quaver, 186, 25
+1, Crotchet, 216, 28
+1, Crotchet, 246, 34
+1, Crotchet, 276, 34
+1, Crotchet, 314, 31
+1, Quaver, 343, 25
+1, Quaver, 365, 28
+1, Quaver, 386, 31
+1, Quaver, 408, 34
+1, Crotchet, 438, 37
+1, Crotchet, 467, 43
+1, Crotchet, 497, 43
+2, Crotchet Rest, 66, 92
+2, Dotted Minim, 105, 102
+2, Dotted Minim, 216, 96
+2, Dotted Minim, 316, 96
+2, Dotted Minim, 437, 90
+3, Crotchet, 56, 180
+3, Quaver, 91, 174
+3, Quaver, 116, 177
+3, Quaver, 142, 180
+3, Quaver, 167, 183
+3, Crotchet, 202, 187
+3, Crotchet, 237, 193
+3, Crotchet, 272, 187
+3, Crotchet, 316, 190
+3, Crotchet, 352, 180
+3, Crotchet, 387, 183
+3, Minim, 433, 178
+3, Crotchet, 491, 190
+4, Dotted Minim, 56, 245
+4, Dotted Minim, 200, 240
+4, Minim, 316, 239
+4, Crotchet, 387, 239
+4, Dotted Minim, 433, 250
+5, Crotchet, 55, 327
+5, Crotchet, 89, 320
+5, Quaver, 122, 314
+5, Quaver, 146, 317
+5, Crotchet, 179, 320
+5, Crotchet, 212, 327
+5, Crotchet, 246, 326
+5, Crotchet, 288, 323
+5, Quaver, 321, 317
+5, Quaver, 345, 320
+5, Quaver, 369, 323
+5, Quaver, 393, 327
+5, Crotchet, 427, 329
+5, Crotchet, 460, 336
+5, Crotchet, 493, 336
+6, Dotted Minim, 57, 396
+6, Dotted Minim, 180, 391
+6, Dotted Minim, 286, 386
+6, Dotted Minim, 426, 382
+7, Crotchet, 55, 473
+7, Quaver, 89, 467
+7, Quaver, 114, 469
+7, Quaver, 139, 473
+7, Quaver, 163, 476
+7, Crotchet, 197, 479
+7, Crotchet, 231, 485
+7, Crotchet, 265, 479
+7, Crotchet, 308, 482
+7, Crotchet, 342, 473
+7, Crotchet, 376, 476
+7, Minim, 421, 472
+7, Quaver, 477, 467
+7, Quaver, 502, 463
+8, Dotted Minim, 57, 536
+8, Dotted Minim, 197, 534
+8, Minim, 309, 531
+8, Crotchet, 376, 539
+8, Dotted Minim, 421, 541
