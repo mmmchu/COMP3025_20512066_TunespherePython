@@ -109,7 +109,7 @@ def identify_notes(modified_image, output_folder):
     red_contours, _ = cv2.findContours(red_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
     # Initialize lists to store results
-    crochets, quavers, crotchet_rests, minims, dotted_minims = [], [], [], [], []
+    crochets, quavers, crotchet_rests, minims, dotted_minims,semibreves_rests = [], [], [], [], [],[]
     notes = []  # List to store all notes with their details
 
     # Create a grayscale copy for black pixel analysis (does not modify original image)
@@ -155,16 +155,49 @@ def identify_notes(modified_image, output_folder):
         # Add note details to the notes list
         notes.append((note_type, center_x, center_y))
 
-    # Process red contours (minims and dotted minims)
+    # Convert the image to HSV for better red color detection
+    hsv_image = cv2.cvtColor(modified_image, cv2.COLOR_BGR2HSV)
+
+    # Define HSV range for detecting red color
+    lower_red1 = np.array([0, 100, 100])
+    upper_red1 = np.array([10, 255, 255])
+    lower_red2 = np.array([160, 100, 100])
+    upper_red2 = np.array([180, 255, 255])
+
+    # Create masks to detect red pixels
+    red_mask1 = cv2.inRange(hsv_image, lower_red1, upper_red1)
+    red_mask2 = cv2.inRange(hsv_image, lower_red2, upper_red2)
+    red_mask = red_mask1 | red_mask2  # Combine both masks
+
+    # Process red contours (minims, dotted minims, semibreves, rests)
     for contour in red_contours:
         x, y, w, h = cv2.boundingRect(contour)
         center_x, center_y = x + w // 2, y + h // 2
 
-        # Check if it's a Minim (M)
-        if 5 <= w <= 12 and 5 <= h <= 12:
-            # Check for dotted minim (DM)
-            dot_x, dot_y, dot_w, dot_h = x + w, y, 12, 12  # Yellow box starts after M box
-            is_dm = False
+        # Define 13x13 regions above and below the detected red dot (potential notehead)
+        top_x, top_y, top_w, top_h = x, max(0, y - 11), 11, 11  # Above the notehead
+        bottom_x, bottom_y, bottom_w, bottom_h = x - 5, min(gray_image.shape[0] - 11,
+                                                            y + h), 11, 11  # Below the notehead
+
+        # Extract the top and bottom regions
+        top_region = gray_image[top_y:top_y + top_h, top_x:top_x + top_w]
+        bottom_region = gray_image[bottom_y:bottom_y + bottom_h, bottom_x:bottom_x + bottom_w]
+
+        # Check for black pixels in top or bottom region
+        top_black_pixels = np.sum(top_region == 0)
+        bottom_black_pixels = np.sum(bottom_region == 0)
+
+        is_minim = (top_black_pixels > 0 or bottom_black_pixels > 0)  # If black pixels exist, it's a Minim (has a stem)
+        is_dm = False  # Flag for Dotted Minim
+
+        # *** New Step: If no black pixels are found, turn only the red pixels in the bounding box to black ***
+        if not is_minim:
+            red_pixels = (red_mask[y:y + h, x:x + w] > 0)  # Get mask of red pixels
+            modified_image[y:y + h, x:x + w][red_pixels] = (0, 0, 0)  # Set only red pixels to black
+
+        if is_minim:
+            # Check for Dotted Minim (DM)
+            dot_x, dot_y, dot_w, dot_h = x + w, y, 12, 12  # Dot region starts after the notehead
 
             if dot_x + dot_w < modified_image.shape[1]:  # Ensure within image bounds
                 dot_region = gray_image[dot_y:dot_y + dot_h, dot_x:dot_x + dot_w]
@@ -172,33 +205,57 @@ def identify_notes(modified_image, output_folder):
                 # Threshold to detect black pixels (invert to make black = 255)
                 _, dot_thresh = cv2.threshold(dot_region, 127, 255, cv2.THRESH_BINARY_INV)
 
-                if np.any(dot_thresh > 0):  # If any black pixel is detected, classify as DM
+                if np.any(dot_thresh > 0):  # If black pixels detected, it's a Dotted Minim
                     is_dm = True
                     dotted_minims.append((x, y, w, h))
 
-            # Assign only one classification
-            if is_dm:
-                note_type = "Dotted Minim"
-                label = "DM"
-                color = (255, 100, 0)
-                dotted_minims.append((x, y, w, h))
+        # Step 1: Define a 14x14 box centered at (center_x, center_y)
+        box_x = max(0, center_x - 7)
+        box_y = max(0, center_y - 7)
+        box_x2 = min(gray_image.shape[1], center_x + 7)
+        box_y2 = min(gray_image.shape[0], center_y + 7)
+
+        # Step 2: Extract the 14x14 region
+        box_region = gray_image[box_y:box_y2, box_x:box_x2]
+
+        # Step 3: Count black pixels
+        black_pixel_count = np.sum(box_region == 0)
+        print(f"Black pixels: {black_pixel_count}")
+        rest_threshold = 5  # Adjust based on testing
+
+        # Assign classification
+        if is_dm:
+            note_type = "Dotted Minim"
+            label = "DM"
+            color = (255, 100, 0)  # Orange for dotted minim
+            dotted_minims.append((x, y, w, h))
+        elif is_minim:
+            note_type = "Minim"
+            label = "M"
+            color = (255, 200, 150)  # Light blue for minim
+            minims.append((x, y, w, h))
+        else:
+            # Step 4: Differentiate between Semibreve and Rest
+            if black_pixel_count > rest_threshold:
+                note_type = "semibreve"
+                label = "SB"
+                color = (0, 150, 255)  # Darker yellow for Rest
             else:
-                note_type = "Minim"
-                label = "M"
-                color = (255, 200, 150)  # Light blue for M
-                minims.append((x, y, w, h))
+                note_type = "rests"
+                label = "R"
+                color = (0, 255, 255)  # Yellow for Semibreve
 
-            # Draw bounding box and label
-            cv2.rectangle(modified_image, (x, y), (x + w, y + h), color, 1)
-            cv2.putText(modified_image, label, (x, y - 5), cv2.FONT_HERSHEY_SIMPLEX, 0.6, color, 1)
+            semibreves_rests.append((x, y, w, h))
 
-            # Draw yellow box for dotted minim detection
-            if is_dm:
-                cv2.rectangle(modified_image, (dot_x, dot_y), (dot_x + dot_w, dot_y + dot_h), (0, 255, 255), 1)
+        cv2.putText(modified_image, label, (x, y - 5), cv2.FONT_HERSHEY_SIMPLEX, 0.6, color, 1)
+        cv2.rectangle(modified_image, (box_x, box_y), (box_x2, box_y2), color, 1)  # Draw 14x14 box
 
-            # Add note details to the notes list
-            notes.append((note_type, center_x, center_y))
+        # Draw yellow box for dotted minim detection
+        if is_dm:
+            cv2.rectangle(modified_image, (dot_x, dot_y), (dot_x + dot_w, dot_y + dot_h), (0, 255, 255), 1)
 
+        # Add note details to the notes list
+        notes.append((note_type, center_x, center_y))
     # Sort notes by Y-coordinate (to group by bars)
     notes.sort(key=lambda note: note[2])  # Sort by center_y (vertical position)
 

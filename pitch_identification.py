@@ -1,5 +1,3 @@
-import os
-
 def read_results_file_and_create_folder(file_path):
     """
     Reads the results.txt file and creates a new folder called 'pitch_identification'.
@@ -26,6 +24,7 @@ def read_results_file_and_create_folder(file_path):
 
     return notes_data, max_bar
 
+
 def assign_note_duration(note_type):
     """
     Assigns a duration (in beats) based on the note type.
@@ -38,6 +37,7 @@ def assign_note_duration(note_type):
         "quaver": 0.5
     }
     return duration_mapping.get(note_type.lower(), 0)  # Default to 0 if note type is unknown
+
 
 def process_notes_with_staffs(notes_data, staff_lines, num_bars, output_file="processed_notes.txt"):
     """
@@ -111,7 +111,7 @@ def process_notes_with_staffs(notes_data, staff_lines, num_bars, output_file="pr
     with open(output_file, "w") as f:
         for bar, note_type, cx, cy, differences, position, duration in processed_notes:
             position_text = f", Position: {position}" if position is not None else ", Position: Unknown"
-            f.write(f" {bar}, {note_type}, CX {cx}, CY {cy}, Differences: {differences}{position_text}, Duration: {duration} beats\n")
+            f.write(
+                f" {bar}, {note_type}, CX {cx}, CY {cy}, Differences: {differences}{position_text}, Duration: {duration} beats\n")
 
     print(f"Processed {len(processed_notes)} notes and saved results to {output_file}")
-

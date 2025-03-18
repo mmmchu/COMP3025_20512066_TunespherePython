@@ -1,6 +1,6 @@
 import re
-import mido
-from mido import Message, MidiFile, MidiTrack
+
+from mido import MidiFile
 
 # Extended MIDI note mappings for treble and bass clefs
 NOTE_TO_MIDI_TREBLE = {
@@ -30,7 +30,7 @@ def get_midi_number(note_position, clef):
             "On Line 2": "D5", "Between Line 2 and Line 3": "C5",
             "On Line 3": "B4", "Between Line 3 and Line 4": "A4",
             "On Line 4": "G4", "Between Line 4 and Line 5": "F#4",
-            "On Line 5": "E4", "Below Line 5": "D4","Below Line": "C4",
+            "On Line 5": "E4", "Below Line 5": "D4", "Below Line": "C4",
         }
         note = position_map.get(note_position, "C4")
         return NOTE_TO_MIDI_TREBLE.get(note, 60)
@@ -47,6 +47,7 @@ def get_midi_number(note_position, clef):
         return NOTE_TO_MIDI_BASS.get(note, 48)
 
     return 60  # Default MIDI number
+
 
 def parse_clef_classification(file_path):
     clefs = []
@@ -74,6 +75,7 @@ def parse_clef_classification(file_path):
                 print(f"Error parsing line: {line.strip()} - {e}")
 
     return clefs
+
 
 def parse_notes(note_file):
     notes = []
@@ -127,6 +129,7 @@ def parse_notes(note_file):
 
     return notes
 
+
 def assign_clef_to_notes(note_data, clef_data):
     assigned_notes = []
 
@@ -173,7 +176,6 @@ def create_midi_file(notes, file_name, ticks_per_beat=480):
     print(f"MIDI file saved: {file_name}")
 
 
-
 def merge_midi_files(treble_file, bass_file, output_file):
     midi_combined = MidiFile()
     treble_midi = MidiFile(treble_file)
@@ -203,4 +205,3 @@ def create_piano_midi(assigned_notes, treble_file='treble.mid', bass_file='bass.
 
     merge_midi_files(treble_file, bass_file, output_file)
     print("Piano MIDI file created successfully!")
-

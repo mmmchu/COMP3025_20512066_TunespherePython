@@ -33,7 +33,7 @@ def apply_method2(image_array):
     adaptive_threshold = cv2.adaptiveThreshold(blurred_img, 255,
                                                cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
                                                cv2.THRESH_BINARY_INV,
-                                               15, 1)  # Adjusted C to preserve noteheads
+                                               15, 5)  # Adjusted C to preserve noteheads
 
     # Step 3: Remove vertical stems using **horizontal erosion**
     horizontal_kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 1))  # Wide but short
