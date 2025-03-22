@@ -34,7 +34,9 @@ def assign_note_duration(note_type):
         "minim": 2,
         "crotchet rest": 1,
         "dotted minim": 3,
-        "quaver": 0.5
+        "quaver": 0.5,
+        "semibreve": 4,
+        "rests": 1
     }
     return duration_mapping.get(note_type.lower(), 0)  # Default to 0 if note type is unknown
 
@@ -95,7 +97,7 @@ def process_notes_with_staffs(notes_data, staff_lines, num_bars, output_file="pr
                 note_position = "Below Line 5"
             elif diff_value == 2 and closest_diff == cy_differences[4]:
                 note_position = f"Between Line {second_closest_idx + 1} and Line {closest_idx + 1}"
-            elif closest_diff == 7 and closest_diff == cy_differences[4]:
+            elif closest_diff > 2  and closest_diff == cy_differences[4]:
                 note_position = "Below Line"
             elif diff_value == 2:
                 closest_idx = cy_differences.index(closest_diff)
