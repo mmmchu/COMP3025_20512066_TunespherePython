@@ -1,6 +1,7 @@
 import cv2
 import numpy as np
 
+
 def getstafflinerow(image_path, save_path):
     # Load the image in grayscale
     img = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)

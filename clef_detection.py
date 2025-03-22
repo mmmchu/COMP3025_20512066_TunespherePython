@@ -3,6 +3,7 @@ import numpy as np
 from PIL import Image
 import cv2
 
+
 def crop_clef(processed_image_path):
     print(f"Loading processed image from: {processed_image_path}")
 
@@ -16,7 +17,6 @@ def crop_clef(processed_image_path):
 
     # Crop from the left to a width of 35 pixels
     width = 32
-    height = processed_img_array.shape[0]
     cropped_img_array = processed_img_array[:, 12:width]
 
     # Create the output folder if it doesn't exist
@@ -69,7 +69,7 @@ def crop_clef(processed_image_path):
     # Iterate through all contours
     for contour in contours:
         # Calculate the contour's bounding box, area, and perimeter
-        (x, y, w, h) = cv2.boundingRect(contour)
+        (_, y, w, h) = cv2.boundingRect(contour)
         area = cv2.contourArea(contour)
         perimeter = cv2.arcLength(contour, True)
 
@@ -127,4 +127,3 @@ def crop_clef(processed_image_path):
             file.write(f"{idx},{clef_type},{cx},{cy}\n")
 
     print(f"Clef classification saved at: {classification_txt_path}")
-

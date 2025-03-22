@@ -2,6 +2,7 @@ import os
 import cv2
 import numpy as np
 
+
 def draw_boundingbox(barboundbox_image_path, notehead_image_path):
     # Load the barboundbox image (with the green bounding boxes)
     barboundbox_image = cv2.imread(barboundbox_image_path)
@@ -55,6 +56,7 @@ def draw_boundingbox(barboundbox_image_path, notehead_image_path):
     # Return the processed notehead image and the yellow boxes
     return notehead_image, yellow_boxes
 
+
 def draw_yellow_line_on_beam(lines_image_path, notehead_image):
     output_folder = 'note_identification'
     os.makedirs(output_folder, exist_ok=True)  # Ensure folder exists
@@ -107,9 +109,10 @@ def identify_notes(modified_image, output_folder):
     green_contours, _ = cv2.findContours(green_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     yellow_contours, _ = cv2.findContours(yellow_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     red_contours, _ = cv2.findContours(red_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-
+    # Initialize variables before conditionals
+    dot_x, dot_y, dot_w, dot_h = 0, 0, 0, 0  # Default values
     # Initialize lists to store results
-    crochets, quavers, crotchet_rests, minims, dotted_minims,semibreves_rests = [], [], [], [], [],[]
+    crochets, quavers, crotchet_rests, minims, dotted_minims, semibreves_rests = [], [], [], [], [], []
     notes = []  # List to store all notes with their details
 
     # Create a grayscale copy for black pixel analysis (does not modify original image)
@@ -257,7 +260,7 @@ def identify_notes(modified_image, output_folder):
         # Add note details to the notes list
         notes.append((note_type, center_x, center_y))
     # Sort notes by Y-coordinate (to group by bars)
-    notes.sort(key=lambda note: note[2])  # Sort by center_y (vertical position)
+    notes.sort(key=lambda Note: Note[2])  # Sort by center_y (vertical position)
 
     # Group notes into bars based on vertical proximity
     bars = []
@@ -275,7 +278,7 @@ def identify_notes(modified_image, output_folder):
 
     # Sort each bar by X-coordinate (left to right order)
     for bar in bars:
-        bar.sort(key=lambda note: note[1])  # Sort by center_x
+        bar.sort(key=lambda Note: Note[1])  # Sort by center_x
 
     # Save sorted results to results.txt with bar information
     results_file_path = os.path.join(output_folder, 'results.txt')

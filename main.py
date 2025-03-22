@@ -25,7 +25,8 @@ def main(pdf_filename):
     bar_folder = 'bar_line_images'
     note_classification_output_folder = 'note_identification'
     process_image_path = f"processed_images/{pdf_filename}_pg_1_BN_cropped_with_staff.png"
-
+    # Initialize modified_image to None at the beginning
+    modified_image = None
     # Convert PDF to grayscale & binarized images
     binarized_image_path = pdf_to_grayscale_and_binarize(pdf_path, output_folder)
 

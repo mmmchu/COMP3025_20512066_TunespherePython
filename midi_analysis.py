@@ -1,4 +1,3 @@
-import mido
 from mido import MidiFile
 
 # Mapping of MIDI pitch numbers to note names

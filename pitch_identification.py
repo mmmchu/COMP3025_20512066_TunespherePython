@@ -97,14 +97,11 @@ def process_notes_with_staffs(notes_data, staff_lines, num_bars, output_file="pr
                 note_position = "Below Line 5"
             elif diff_value == 2 and closest_diff == cy_differences[4]:
                 note_position = f"Between Line {second_closest_idx + 1} and Line {closest_idx + 1}"
-            elif closest_diff > 2  and closest_diff == cy_differences[4]:
+            elif closest_diff > 2 and closest_diff == cy_differences[4]:
                 note_position = "Below Line"
             elif diff_value == 2:
                 closest_idx = cy_differences.index(closest_diff)
                 note_position = f"On Line {closest_idx + 1}"
-
-        # Ensure position is always assigned
-        position_text = f", Position: {note_position}" if note_position is not None else ", Position: Unknown"
 
         duration = assign_note_duration(note_type)
 
@@ -114,6 +111,7 @@ def process_notes_with_staffs(notes_data, staff_lines, num_bars, output_file="pr
         for bar, note_type, cx, cy, differences, position, duration in processed_notes:
             position_text = f", Position: {position}" if position is not None else ", Position: Unknown"
             f.write(
-                f" {bar}, {note_type}, CX {cx}, CY {cy}, Differences: {differences}{position_text}, Duration: {duration} beats\n")
+                f" {bar}, {note_type}, CX {cx}, CY {cy}, Differences: {differences}{position_text}"
+                f", Duration: {duration} beats\n")
 
     print(f"Processed {len(processed_notes)} notes and saved results to {output_file}")
