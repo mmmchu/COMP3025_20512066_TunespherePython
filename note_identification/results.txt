@@ -10,7 +10,7 @@ Bar, Note Type, CX, CY
 1, Crotchet, 314, 31
 1, Quaver, 343, 25
 1, Quaver, 365, 28
-1, Quaver, 386, 31
+1, Crotchet, 386, 31
 1, Quaver, 408, 34
 1, Crotchet, 438, 37
 1, Crotchet, 467, 43
@@ -61,9 +61,9 @@ Bar, Note Type, CX, CY
 7, Quaver, 89, 467
 7, Quaver, 114, 469
 7, Quaver, 139, 473
-7, Quaver, 163, 476
+7, Quaver, 163, 473
 7, Crotchet, 197, 479
-7, Crotchet, 231, 485
+7, Quaver, 230, 483
 7, Crotchet, 265, 479
 7, Crotchet, 308, 482
 7, Crotchet, 342, 473

@@ -17,9 +17,11 @@ from map_notes_to_midi import parse_notes, parse_clef_classification, assign_cle
 import argparse
 
 
+
 def main(pdf_filename):
     # Paths
     pdf_path = f'Image/{pdf_filename}.pdf'
+
     output_folder = 'processed_images'
     notehead_folder = 'notehead_images'
     bar_folder = 'bar_line_images'
@@ -70,8 +72,7 @@ def main(pdf_filename):
             clefs = parse_clef_classification('clef_images/clef_classification.txt')
             assigned_notes = assign_clef_to_notes(notes, clefs)
 
-            # Generate separate MIDI files for treble and bass and combine them into a piano MIDI file
-            create_piano_midi(assigned_notes)
+            create_piano_midi(assigned_notes, pdf_filename)
 
 
 if __name__ == "__main__":

@@ -1,5 +1,5 @@
 import re
-
+import os
 from mido import MidiFile
 
 # Extended MIDI note mappings for treble and bass clefs
@@ -12,7 +12,7 @@ NOTE_TO_MIDI_TREBLE = {
     "G6": 91, "G#6": 92, "A6": 93, "A#6": 94, "B6": 95
 }
 
-NOTE_TO_MIDI_BASS = {
+NOTE_TO_MIDI_BASS ={
     "C1": 24, "C#1": 25, "D1": 26, "D#1": 27, "E1": 28, "F1": 29, "F#1": 30,
     "G1": 31, "G#1": 32, "A1": 33, "A#1": 34, "B1": 35,
     "C2": 36, "C#2": 37, "D2": 38, "D#2": 39, "E2": 40, "F2": 41, "F#2": 42,
@@ -186,13 +186,20 @@ def merge_midi_files(treble_file, bass_file, output_file):
 
     midi_combined.save(output_file)
 
+def create_piano_midi(assigned_notes, pdf_filename, output_dir="midi_files"):
+    os.makedirs(output_dir, exist_ok=True)
 
-def create_piano_midi(assigned_notes, treble_file='treble.mid', bass_file='bass.mid', output_file='piano_combined.mid'):
+    # Use the same name as the input PDF
+    output_file = f"{pdf_filename}.mid"
+    output_file_path = os.path.join(output_dir, output_file)
+
+    treble_file = os.path.join(output_dir, f"{pdf_filename}_treble.mid")
+    bass_file = os.path.join(output_dir, f"{pdf_filename}_bass.mid")
+
     treble_notes = []
     bass_notes = []
 
     for note_data in assigned_notes:
-        # Unpack the tuple correctly
         bar, note_type, position, duration, clef, midi_note = note_data
 
         if clef == "treble":
@@ -200,8 +207,15 @@ def create_piano_midi(assigned_notes, treble_file='treble.mid', bass_file='bass.
         elif clef == "bass":
             bass_notes.append((midi_note, duration))
 
+    # Create separate MIDI files for treble and bass clefs
     create_midi_file(treble_notes, treble_file)
     create_midi_file(bass_notes, bass_file)
 
-    merge_midi_files(treble_file, bass_file, output_file)
-    print("Piano MIDI file created successfully!")
+    # Merge both MIDI files
+    merge_midi_files(treble_file, bass_file, output_file_path)
+
+    print(f"Piano MIDI file created successfully: {output_file_path}")
+
+
+    return output_file_path
+
