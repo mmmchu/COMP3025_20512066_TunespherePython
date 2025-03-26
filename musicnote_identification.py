@@ -128,8 +128,8 @@ def identify_notes(modified_image, output_folder):
 
         # Check if near yellow beam (quaver)
         is_quaver = any(
-            bx - 10 <= center_x <= bx + bw + 10 and
-            (by + bh < center_y <= by + bh + 20 or by - 20 <= center_y <= by)
+            bx - 10 <= center_x <= bx + bw + 20 and
+            (by + bh < center_y <= by + bh + 50 or by - 50 <= center_y <= by)
             for yellow_contour in yellow_contours
             for bx, by, bw, bh in [cv2.boundingRect(yellow_contour)]
         )

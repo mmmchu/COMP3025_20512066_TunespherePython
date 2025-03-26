@@ -1,6 +1,7 @@
 import re
-import os
+
 from mido import MidiFile
+import os
 
 # Extended MIDI note mappings for treble and bass clefs
 NOTE_TO_MIDI_TREBLE = {
@@ -29,6 +30,7 @@ def get_midi_number(note_position, clef):
             "On Line 1": "F#5", "Between Line 1 and Line 2": "E5",
             "On Line 2": "D5", "Between Line 2 and Line 3": "C5",
             "On Line 3": "B4", "Between Line 3 and Line 4": "A4",
+            "Between Line 4 and Line 3": "A4",
             "On Line 4": "G4", "Between Line 4 and Line 5": "F#4",
             "On Line 5": "E4", "Below Line 5": "D4", "Below Line": "C4",
         }
@@ -41,7 +43,7 @@ def get_midi_number(note_position, clef):
             "On Line 2": "F#3", "Between Line 2 and Line 3": "E3",
             "On Line 3": "D3", "Between Line 3 and Line 4": "C3",
             "On Line 4": "B2", "Between Line 4 and Line 5": "A2",
-            "On Line 5": "G2", "Below Line 5": "F2"
+            "On Line 5": "G2", "Below Line 5": "F2", "Between Line 4 and Line 3": "C3"
         }
         note = position_map.get(note_position, "C3")
         return NOTE_TO_MIDI_BASS.get(note, 48)
@@ -159,7 +161,7 @@ def assign_clef_to_notes(note_data, clef_data):
     return assigned_notes
 
 
-def create_midi_file(notes, file_name, ticks_per_beat=480):
+def create_midi_file(notes, file_name, ticks_per_beat=479):
     from mido import Message, MidiFile, MidiTrack
 
     midi = MidiFile(ticks_per_beat=ticks_per_beat)

@@ -97,11 +97,14 @@ def process_notes_with_staffs(notes_data, staff_lines, num_bars, output_file="pr
                 note_position = "Below Line 5"
             elif diff_value == 2 and closest_diff == cy_differences[4]:
                 note_position = f"Between Line {second_closest_idx + 1} and Line {closest_idx + 1}"
-            elif closest_diff > 2 and closest_diff == cy_differences[4]:
+            elif diff_value == 2 and closest_diff == cy_differences[2]:
+                note_position = f"Between Line {second_closest_idx + 1} and Line {closest_idx + 1}"
+            elif closest_diff == 7 and closest_diff == cy_differences[4]:
                 note_position = "Below Line"
             elif diff_value == 2:
                 closest_idx = cy_differences.index(closest_diff)
                 note_position = f"On Line {closest_idx + 1}"
+
 
         duration = assign_note_duration(note_type)
 

@@ -61,7 +61,7 @@ def crop_clef(processed_image_path):
     contours, _ = cv2.findContours(dilated_img, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
     # Define a threshold for circularity to consider a contour as circular
-    circularity_threshold = 0.7
+    circularity_threshold = 0.65
 
     # List to store blob information
     blob_info = []

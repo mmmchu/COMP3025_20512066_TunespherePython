@@ -61,7 +61,7 @@ def beam_image_processing(image_array, output_folder):
     print(f"Edges image saved to: {edges_output_path}")
 
     # Apply Hough Line Transform
-    lines = cv2.HoughLinesP(edges, 1, np.pi / 180, threshold=30, minLineLength=8, maxLineGap=5)
+    lines = cv2.HoughLinesP(edges, 1, np.pi / 180, threshold=30, minLineLength=9, maxLineGap=5)
 
     # Get the height of the image
     image_height = gray_image.shape[0]
