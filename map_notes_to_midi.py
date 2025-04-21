@@ -171,8 +171,8 @@ def create_midi_file(notes, file_name, ticks_per_beat=479):
     for midi_note, duration in notes:
         tick_duration = int(duration * ticks_per_beat)  # Convert duration to int
 
-        track.append(Message('note_on', note=midi_note, velocity=64, time=0))
-        track.append(Message('note_off', note=midi_note, velocity=64, time=tick_duration))
+        track.append(Message('note_on', note=midi_note, velocity=120, time=0))
+        track.append(Message('note_off', note=midi_note, velocity=120, time=tick_duration))
 
     midi.save(file_name)
     print(f"MIDI file saved: {file_name}")
