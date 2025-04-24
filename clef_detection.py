@@ -103,7 +103,7 @@ def crop_clef(processed_image_path):
         # Draw the corresponding letter (B or T) near the blob
         color = (0, 0, 255) if clef_type == "B" else (255, 0, 0)  # Red for B, Blue for T
         cv2.putText(clef_img_color, clef_type, (cx + 5, cy),
-                    cv2.FONT_HERSHEY_SIMPLEX, 0.6, color, 2)
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.6, color, 1)
 
     # Save the updated image
     output_path = os.path.join(output_folder, "clef_classification.png")
