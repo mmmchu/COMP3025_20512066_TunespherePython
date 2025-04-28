@@ -57,7 +57,10 @@ def apply_method2(image_array):
 
     return blurred_img, adaptive_threshold, color_img_gaussian, color_img_closing
 
-cropped_img_color= None
+
+cropped_img_color = None
+
+
 def detect_blobs(image, method_name, cropped_image_path=None):
     """Apply blob detection based on circularity, aspect ratio, and size, and save the results."""
     # Ensure image is in grayscale format (single-channel)
@@ -148,13 +151,13 @@ def detect_blobs(image, method_name, cropped_image_path=None):
                 cv2.circle(cropped_img_color, (cx, cy), 3, (0, 0, 255), -1)
 
     # Save the blob-detected image
-    blob_save_path = os.path.join('notehead_images', f"{method_name}_blobs.png")
+    blob_save_path = os.path.join('../../notehead_images', f"{method_name}_blobs.png")
     cv2.imwrite(blob_save_path, blob_img_color)
     print(f"{method_name} Blob-detected image saved at: {blob_save_path}")
 
     # Save the modified cropped image with blobs drawn on it
     if cropped_img_color is not None:
-        cropped_blob_save_path = os.path.join('notehead_images', "cropped_image_with_blobs.png")
+        cropped_blob_save_path = os.path.join('../../notehead_images', "cropped_image_with_blobs.png")
         cv2.imwrite(cropped_blob_save_path, cropped_img_color)
         print(f"Cropped image with blobs saved at: {cropped_blob_save_path}")
 

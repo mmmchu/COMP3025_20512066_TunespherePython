@@ -13,7 +13,7 @@ NOTE_TO_MIDI_TREBLE = {
     "G6": 91, "G#6": 92, "A6": 93, "A#6": 94, "B6": 95
 }
 
-NOTE_TO_MIDI_BASS ={
+NOTE_TO_MIDI_BASS = {
     "C1": 24, "C#1": 25, "D1": 26, "D#1": 27, "E1": 28, "F1": 29, "F#1": 30,
     "G1": 31, "G#1": 32, "A1": 33, "A#1": 34, "B1": 35,
     "C2": 36, "C#2": 37, "D2": 38, "D#2": 39, "E2": 40, "F2": 41, "F#2": 42,
@@ -188,6 +188,7 @@ def merge_midi_files(treble_file, bass_file, output_file):
 
     midi_combined.save(output_file)
 
+
 def create_piano_midi(assigned_notes, pdf_filename, output_dir="midi_files"):
     os.makedirs(output_dir, exist_ok=True)
 
@@ -218,6 +219,4 @@ def create_piano_midi(assigned_notes, pdf_filename, output_dir="midi_files"):
 
     print(f"Piano MIDI file created successfully: {output_file_path}")
 
-
     return output_file_path
-

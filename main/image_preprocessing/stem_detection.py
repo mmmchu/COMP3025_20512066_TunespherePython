@@ -3,8 +3,10 @@ import numpy as np
 from PIL import Image
 import cv2  # OpenCV for image processing
 
+
 def process_image(image_array, output_folder):
-    """Process the image by dilating, eroding, applying Canny edge detection, dilating again, and detecting vertical lines using Hough Transform."""
+    """Process the image by dilating, eroding, applying Canny edge detection, dilating again, and detecting vertical
+    lines using Hough Transform."""
 
     # Dilate the image with a kernel size of 7x1 to enhance vertical lines
     dilation_kernel = np.ones((6, 1), np.uint8)
@@ -42,7 +44,7 @@ def process_image(image_array, output_folder):
     print(f"Dilated edges image saved to: {dilated_edges_output_path}")
 
     # Detect lines using the Hough Transform
-    lines = cv2.HoughLinesP(dilated_edges, 1, np.pi / 180, threshold= 8, minLineLength=5, maxLineGap=1)
+    lines = cv2.HoughLinesP(dilated_edges, 1, np.pi / 180, threshold=8, minLineLength=5, maxLineGap=1)
     if lines is not None:
         line_img = np.zeros_like(image_array)  # Black image to draw lines on
         for line in lines:
@@ -55,6 +57,7 @@ def process_image(image_array, output_folder):
         vertical_lines_output_path = os.path.join(output_folder, 'vertical_lines.png')
         Image.fromarray(line_img).save(vertical_lines_output_path)
         print(f"Image with vertical lines saved to: {vertical_lines_output_path}")
+
 
 def stem_detect(processed_image_path):
     """Detect stems in the given image by processing and enhancing vertical lines."""

@@ -1,21 +1,20 @@
 import os
-from grayscalebinarize import pdf_to_grayscale_and_binarize
-from staff_removal import process_image
-from clef_detection import crop_clef
-from note_head_detection import notes_detect
-from staff_line_row_index import getstafflinerow
-from stem_detection import stem_detect
-from beam_detection import beam_detect
-from bar_lines_detection import bar_detect
-from musicnote_identification import (
+from main.image_preprocessing.grayscalebinarize import pdf_to_grayscale_and_binarize
+from main.image_preprocessing.staff_removal import process_image
+from main.image_preprocessing.clef_detection import crop_clef
+from main.image_preprocessing.note_head_detection import notes_detect
+from main.image_preprocessing.staff_line_row_index import getstafflinerow
+from main.image_preprocessing.stem_detection import stem_detect
+from main.image_preprocessing.beam_detection import beam_detect
+from main.image_preprocessing.bar_lines_detection import bar_detect
+from main.midi_generation.musicnote_identification import (
     draw_yellow_line_on_beam,
     draw_boundingbox,
     identify_notes,
 )
-from pitch_identification import read_results_file_and_create_folder, process_notes_with_staffs
-from map_notes_to_midi import parse_notes, parse_clef_classification, assign_clef_to_notes, create_piano_midi
+from main.midi_generation.pitch_identification import read_results_file_and_create_folder, process_notes_with_staffs
+from main.midi_generation.map_notes_to_midi import parse_notes, parse_clef_classification, assign_clef_to_notes, create_piano_midi
 import argparse
-
 
 
 def main(pdf_filename):
@@ -45,7 +44,7 @@ def main(pdf_filename):
             bar_detect(cropped_image_path_without_staff)
 
             # Get staff line row indexes
-            staff_line_rows, total_staff_lines = getstafflinerow(process_image_path, "outputstaffline.png")
+            staff_line_rows, total_staff_lines = getstafflinerow(process_image_path, "../outputstaffline.png")
             print(f"Total Staff Lines Detected: {total_staff_lines}")
             print(f"Staff Line Row Indexes: {staff_line_rows}")  # You can now use this in other functions
 
@@ -56,20 +55,20 @@ def main(pdf_filename):
 
             if processed_image is not None:
                 # Now draw the yellow beam lines on the notehead image based on lines.png
-                modified_image = draw_yellow_line_on_beam('beam_images/lines.png', processed_image)
+                modified_image = draw_yellow_line_on_beam('../beam_images/lines.png', processed_image)
 
             # Identify crochets (green dots) and quavers (green dots with yellow beam lines)
             print("Identifying crochets and quavers...")
             identify_notes(modified_image, note_classification_output_folder)
 
             # Read the results file and get the notes data and total number of bars
-            notes_data, num_bars = read_results_file_and_create_folder('note_identification/results.txt')
+            notes_data, num_bars = read_results_file_and_create_folder('../note_identification/results.txt')
 
             # Process the notes with the staff lines
             process_notes_with_staffs(notes_data, staff_line_rows, num_bars)
             # Process MIDI file creation
-            notes = parse_notes('processed_notes.txt')
-            clefs = parse_clef_classification('clef_images/clef_classification.txt')
+            notes = parse_notes('../processed_notes.txt')
+            clefs = parse_clef_classification('../clef_images/clef_classification.txt')
             assigned_notes = assign_clef_to_notes(notes, clefs)
 
             create_piano_midi(assigned_notes, pdf_filename)

@@ -3,6 +3,7 @@ import numpy as np
 import cv2
 from PIL import Image
 
+
 def bar_detect(processed_image_path, min_bar_height=20):
     print(f"Loading processed image from: {processed_image_path}")
 

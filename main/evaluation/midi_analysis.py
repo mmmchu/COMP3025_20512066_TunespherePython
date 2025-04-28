@@ -4,10 +4,12 @@ import difflib
 
 NOTE_NAMES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']
 
+
 def midi_pitch_to_note(pitch):
     note = NOTE_NAMES[pitch % 12]
     octave = (pitch // 12) - 1
     return f"{note}{octave}"
+
 
 def extract_notes(file_path):
     midi = MidiFile(file_path)
@@ -31,14 +33,17 @@ def extract_notes(file_path):
 
     return track_notes, total_duration
 
+
 def trim_notes_by_duration(notes, max_time):
     return [note for note in notes if note[3] <= max_time]
+
 
 def jaccard_similarity(list1, list2):
     set1, set2 = set(list1), set(list2)
     if not set1 and not set2:
         return 1.0
     return len(set1 & set2) / len(set1 | set2)
+
 
 def compare_midi_files(file1, file2):
     notes1_all, _ = extract_notes(file1)
@@ -59,15 +64,16 @@ def compare_midi_files(file1, file2):
 
     return closeness
 
-def compare_and_plot(original_files, generated_files):
+
+def compare_and_plot(ori_files, gen_files):
     # Compare original vs generated pairs
     similarity_scores = []
-    for i in range(len(original_files)):
-        score = compare_midi_files(original_files[i], generated_files[i])
+    for i in range(len(ori_files)):
+        score = compare_midi_files(ori_files[i], gen_files[i])
         similarity_scores.append(score)
 
     # Plotting the results as a bar chart
-    labels = [f'Original {i+1} vs Generated {i+1}' for i in range(len(original_files))]
+    labels = [f'Original {i + 1} vs Generated {i + 1}' for i in range(len(ori_files))]
     scores = similarity_scores
 
     plt.figure(figsize=(10, 6))
@@ -78,10 +84,11 @@ def compare_and_plot(original_files, generated_files):
 
     for bar in bars:
         yval = bar.get_height()
-        plt.text(bar.get_x() + bar.get_width()/2, yval + 1, f'{yval:.2f}%', ha='center', va='bottom')
+        plt.text(bar.get_x() + bar.get_width() / 2, yval + 1, f'{yval:.2f}%', ha='center', va='bottom')
 
     plt.tight_layout()
     plt.show()
+
 
 # Specify the file paths for the 3 original and 3 generated MIDI files
 original_files = ["ori.mid", "midi_files/music2.mid", "midi_files/music3.mid"]
