@@ -107,6 +107,7 @@ def process_notes_with_staffs(notes_data, staff_lines, num_bars, output_file="pr
                 closest_idx = cy_differences.index(closest_diff)
                 note_position = f"On Line {closest_idx + 1}"
 
+
         duration = assign_note_duration(note_type)
 
         processed_notes.append((bar_number, note_type, note_x, note_y, cy_differences, note_position, duration))
