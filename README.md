@@ -65,7 +65,7 @@ Manual and automated checks ensure that the resulting MIDI matches the intended 
 
 ```bash
 # 1. Clone the repository
-git clone <https://github.com/mmmchu/FYP_tunepython.git>
+git clone <[https://github.com/mmmchu/FYP_tunepython.git](https://github.com/mmmchu/COMP3025_20512066_TunespherePython.git)>
 
 # 2. Install Flutter packages
 flutter pub get
@@ -77,7 +77,7 @@ flutter run main.py
 ### Python Backend Setup
 
 ```bash
-git clone <https://github.com/mmmchu/FYP_tuneapp.git>
+git clone <[https://github.com/mmmchu/FYP_tuneapp.git](https://github.com/mmmchu/COMP3025_20512066_TunesphereApplication.git)>
 
 # 2. Install backend dependencies
 pip install -r requirements.txt
