@@ -80,12 +80,9 @@ flutter run main.py
 git clone <https://github.com/mmmchu/FYP_tuneapp.git>
 
 # 2. Install backend dependencies
-pip install flask mido opencv-python numpy Pillow PyMuPDF
-
-# 3. Install backend dependencies
 pip install -r requirements.txt
 
-# 4. Start the Flask server
+# 3. Start the Flask server
 python server.py
 ```
 ---
