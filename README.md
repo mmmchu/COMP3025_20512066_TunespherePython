@@ -5,17 +5,6 @@
 ---
 
 ## 📦  Libraries Used
-
-### Flutter (Frontend)
-- **Flutter**: Cross-platform mobile app development framework.
-- **Dart**: Programming language for app logic.
-- **Packages**:
-    - `file_picker`: Select PDF files from device storage.
-    - `http`: Communicate with the Python backend.
-    - `just_audio`: Play MIDI files after conversion.
-    - `shared_preferences`: Store and retrieve user data (MIDI file metadata).
-    - `syncfusion_flutter_pdfviewer`: Display PDF files before conversion.
-
 ### Python (Backend)
 - **Flask**: Lightweight web framework to handle PDF uploads and MIDI generation.
 - **Libraries**:
@@ -49,35 +38,11 @@ Detected notes are mapped to MIDI pitches and rhythms. The MIDI file is construc
 Manual and automated checks ensure that the resulting MIDI matches the intended musical notation.
 
 ---
-
-## 📱 Mobile App Features
-
-- 📄 Upload and preview PDF sheet music.
-- 🎶 Convert PDFs to playable MIDI files.
-- 🎵 Playback MIDI files inside the app.
-- 📚 Manage and view saved MIDI files in the **Library**.
-
----
-
 ## 🛠️ Setup Instructions
-
-### Flutter App Setup
-
-```bash
-# 1. Clone the repository
-git clone <https://github.com/mmmchu/COMP3025_20512066_TunespherePython.git>
-
-# 2. Install Flutter packages
-flutter pub get
-
-# 3. Run on connected device or emulator
-flutter run main.py
-```
-
 ### Python Backend Setup
 
 ```bash
-git clone <https://github.com/mmmchu/COMP3025_20512066_TunesphereApplication.git>
+git clone <https://github.com/mmmchu/COMP3025_20512066_TunespherePython.git>
 
 # 2. Install backend dependencies
 pip install -r requirements.txt
